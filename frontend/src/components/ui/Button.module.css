@@ -1,0 +1,89 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--ease-fast), color var(--ease-fast),
+              border-color var(--ease-fast), transform var(--ease-fast),
+              box-shadow var(--ease-fast);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn:active { transform: translateY(1px); }
+
+/* ── Sizes ── */
+.sm  { padding: var(--space-2) var(--space-4);  font-size: var(--text-xs); }
+.md  { padding: var(--space-3) var(--space-6);  font-size: var(--text-sm); }
+.lg  { padding: var(--space-4) var(--space-8);  font-size: var(--text-base); }
+
+/* ── Variants ── */
+.primary {
+  background: var(--color-navy);
+  color: var(--color-white);
+  border-color: var(--color-navy);
+}
+.primary:hover {
+  background: var(--color-navy-800);
+  border-color: var(--color-navy-800);
+  box-shadow: var(--shadow-md);
+}
+
+.secondary {
+  background: transparent;
+  color: var(--color-navy);
+  border-color: var(--color-navy);
+}
+.secondary:hover {
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+
+.danger {
+  background: var(--color-red);
+  color: var(--color-white);
+  border-color: var(--color-red);
+}
+.danger:hover {
+  background: var(--color-red-dark);
+  border-color: var(--color-red-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-gray-600);
+  border-color: transparent;
+}
+.ghost:hover {
+  color: var(--color-navy);
+  background: var(--color-gray-100);
+}
+
+.white {
+  background: var(--color-white);
+  color: var(--color-navy);
+  border-color: var(--color-white);
+}
+.white:hover {
+  background: var(--color-gray-100);
+  border-color: var(--color-gray-100);
+  box-shadow: var(--shadow-md);
+}
+
+.whiteOutline {
+  background: transparent;
+  color: var(--color-white);
+  border-color: rgba(255,255,255,0.5);
+}
+.whiteOutline:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--color-white);
+}
+
+.full { width: 100%; justify-content: center; }

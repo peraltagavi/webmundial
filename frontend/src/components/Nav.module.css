@@ -1,0 +1,94 @@
+.topBar {
+  height: 3px;
+  background: var(--color-red);
+  width: 100%;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--nav-height);
+}
+
+/* ── Logo ── */
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.logoEl {
+  font-size: var(--text-xl);
+  font-weight: 400;
+  color: var(--color-navy);
+  letter-spacing: -0.01em;
+}
+
+.logoSim {
+  font-size: var(--text-xl);
+  font-weight: 900;
+  color: var(--color-navy);
+  letter-spacing: -0.03em;
+}
+
+.logoDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-red);
+  margin-left: 2px;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Links ── */
+.links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.link {
+  position: relative;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-gray-500);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: color var(--ease-fast), background var(--ease-fast);
+}
+
+.link:hover {
+  color: var(--color-navy);
+  background: var(--color-gray-50);
+}
+
+.linkActive {
+  color: var(--color-navy);
+}
+
+.linkActive::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: var(--space-3);
+  right: var(--space-3);
+  height: 2px;
+  background: var(--color-red);
+  border-radius: 2px 2px 0 0;
+}

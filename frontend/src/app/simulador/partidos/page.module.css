@@ -1,0 +1,560 @@
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--nav-height));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BLOQUE 1 — EL ENFRENTAMIENTO (fondo navy)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.blockMatch {
+  background: var(--color-navy);
+  padding: var(--space-12) 0 var(--space-10);
+}
+
+/* ── Header ── */
+.pageHeader  { margin-bottom: var(--space-8); }
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: rgba(255,255,255,0.4);
+  margin-bottom: var(--space-4);
+}
+.breadcrumb a           { color: rgba(255,255,255,0.45); transition: color var(--ease-fast); }
+.breadcrumb a:hover     { color: rgba(255,255,255,0.9); }
+.breadcrumb span        { color: rgba(255,255,255,0.25); }
+
+.pageTitle {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 900;
+  color: var(--color-white);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.pageSubtitle {
+  font-size: var(--text-sm);
+  color: rgba(255,255,255,0.45);
+  margin-top: var(--space-2);
+}
+
+/* ── Selector row ── */
+.selectorRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--space-6);
+  align-items: start;
+  margin-bottom: var(--space-8);
+}
+
+.selectorCard {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+}
+
+.selectorLabel {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+.selectorLabelA { color: rgba(255,255,255,0.55); }
+.selectorLabelB { color: rgba(208,2,27,0.75); }
+
+.selectWrapper { position: relative; }
+
+.selectDark {
+  width: 100%;
+  appearance: none;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-white);
+  cursor: pointer;
+  transition: border-color var(--ease-fast), box-shadow var(--ease-fast);
+}
+.selectDark:focus {
+  outline: none;
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.07);
+}
+.selectDark option { background: #0a1628; color: white; }
+
+.selectArrow {
+  position: absolute;
+  right: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: rgba(255,255,255,0.35);
+  font-size: var(--text-xs);
+}
+
+.teamPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: rgba(0,0,0,0.15);
+  border-radius: var(--radius-md);
+  min-height: 52px;
+}
+
+.teamChip {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.teamChipA { background: var(--color-white);  color: var(--color-navy); }
+.teamChipB { background: var(--color-red);    color: var(--color-white); }
+
+.teamPreviewInfo   { flex: 1; min-width: 0; }
+.teamPreviewName   { font-weight: 700; color: var(--color-white); font-size: var(--text-sm);
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.teamPreviewRank   { font-size: var(--text-xs); color: rgba(255,255,255,0.4); margin-top: 2px; }
+.teamPreviewEmpty  { font-size: var(--text-sm); color: rgba(255,255,255,0.25); }
+
+/* ── VS center ── */
+.vsCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding-top: var(--space-8);
+}
+
+.teamCodeLarge {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+.teamCodeLargeA { color: var(--color-white); }
+.teamCodeLargeB { color: var(--color-red); }
+
+.vsLabel {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.2);
+  padding: var(--space-1) 0;
+}
+
+/* ── Probability bars ── */
+.probSection {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: var(--space-6);
+}
+
+.probSectionTitle {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: var(--space-5);
+}
+
+.probBars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.probBar { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.probBarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.probTeamName { font-size: var(--text-sm); font-weight: 600; color: rgba(255,255,255,0.7); }
+.probPct      { font-size: var(--text-xl); font-weight: 900; color: var(--color-white);
+                letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+
+.probTrack {
+  height: 7px;
+  background: rgba(255,255,255,0.09);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.probFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease-out;
+}
+.probFillA { background: rgba(255,255,255,0.85); }
+.probFillE { background: rgba(255,255,255,0.32); }
+.probFillB { background: var(--color-red); }
+
+.h2hNote {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: rgba(255,255,255,0.28);
+  font-style: italic;
+}
+
+.probLoading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) 0;
+  color: rgba(255,255,255,0.4);
+  font-size: var(--text-sm);
+}
+.probSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: rgba(255,255,255,0.6);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BLOQUE 2 — ANÁLISIS COMPARATIVO (fondo blanco)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.blockAnalysis {
+  background: var(--color-white);
+  padding: var(--space-12) 0;
+  border-top: 1px solid rgba(10,22,40,0.12);
+}
+
+.sectionTitle {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-red);
+  margin-bottom: var(--space-6);
+}
+
+/* ── Rank cards ── */
+.rankGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.rankCard {
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+.rankCardA { border-top: 4px solid var(--color-navy); }
+.rankCardB { border-top: 4px solid var(--color-red); }
+
+.rankTeamLabel {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+.rankTeamLabelA { color: var(--color-navy); }
+.rankTeamLabelB { color: var(--color-red); }
+
+.rankTeamName {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rankNum {
+  font-size: clamp(2.8rem, 7vw, 4.5rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+.rankNumA { color: var(--color-navy); }
+.rankNumB { color: var(--color-red); }
+
+.rankPoints {
+  font-size: var(--text-sm);
+  color: var(--color-gray-500);
+  margin-bottom: var(--space-5);
+}
+
+/* ── Form pills ── */
+.formRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.formLabel {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-gray-400);
+  margin-right: var(--space-1);
+}
+.formEmpty { font-size: var(--text-xs); color: var(--color-gray-400); }
+
+.pill {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  cursor: default;
+}
+.pillG { background: #16a34a; color: white; }
+.pillE { background: var(--color-gray-400); color: white; }
+.pillP { background: var(--color-red); color: white; }
+.pillN { background: var(--color-gray-200); color: var(--color-gray-500); }
+
+/* ── 3 metrics ── */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.metricCard {
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-4);
+}
+
+.metricLabel {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-gray-500);
+  margin-bottom: var(--space-4);
+}
+
+.metricValues {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.metricVal {
+  font-size: var(--text-xl);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--ease-fast);
+}
+.metricValA { color: var(--color-navy); }
+.metricValB { color: var(--color-red); }
+.metricDim  { color: var(--color-gray-300) !important; }
+
+.metricVs {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-gray-300);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BLOQUE 3 — EL SIMULADOR (fondo gris claro)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.blockSim {
+  background: var(--color-gray-50);
+  border-top: 1px solid var(--color-gray-200);
+  padding: var(--space-16) 0 var(--space-20);
+  flex: 1;
+}
+
+.simContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.simTitle {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-red);
+}
+
+/* ── Simular button ── */
+.btnSimular {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-14);
+  background: var(--color-red);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(208,2,27,0.35);
+  transition: transform var(--ease-fast), box-shadow var(--ease-fast), opacity var(--ease-fast);
+}
+.btnSimular:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(208,2,27,0.45);
+}
+.btnSimular:active:not(:disabled) { transform: translateY(0); }
+.btnSimular:disabled               { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Scoreboard ── */
+.scoreboard {
+  width: 100%;
+  background: var(--color-navy);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8) var(--space-6);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-md);
+}
+
+.scoreTeam { min-width: 0; }
+.scoreTeamName {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scoreTeamNameB { text-align: left; }
+
+.scoreNums {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.scoreDigit {
+  font-size: clamp(3.5rem, 10vw, 6rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  min-width: 0.7em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.25s ease;
+}
+.scoreDigitRolling { color: rgba(255,255,255,0.18); }
+.scoreDigitA       { color: var(--color-white); }
+.scoreDigitB       { color: var(--color-red); }
+
+.scoreSep {
+  font-size: clamp(2.5rem, 7vw, 4rem);
+  font-weight: 900;
+  color: rgba(255,255,255,0.15);
+  line-height: 1;
+}
+
+/* ── Match description ── */
+.matchDesc {
+  font-size: var(--text-base);
+  color: var(--color-gray-600);
+  font-style: italic;
+  max-width: 400px;
+  line-height: 1.55;
+}
+
+/* ── Simulate again button ── */
+.btnSimAgain {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: transparent;
+  border: 2px solid var(--color-navy);
+  border-radius: var(--radius-md);
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background var(--ease-fast), color var(--ease-fast);
+}
+.btnSimAgain:hover { background: var(--color-navy); color: var(--color-white); }
+
+/* ── Counter ── */
+.counter {
+  font-size: var(--text-sm);
+  color: var(--color-gray-500);
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  line-height: 1.6;
+}
+.counterA { font-weight: 700; color: var(--color-navy); }
+.counterB { font-weight: 700; color: var(--color-red); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .selectorRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  .vsCenter { display: none; }
+
+  .rankGrid     { grid-template-columns: 1fr; }
+  .metricsGrid  { grid-template-columns: 1fr; }
+
+  .scoreboard {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+  .scoreTeamName  { text-align: center; }
+  .scoreTeamNameB { text-align: center; }
+  .scoreNums      { justify-content: center; }
+
+  .btnSimular { padding: var(--space-4) var(--space-8); }
+}

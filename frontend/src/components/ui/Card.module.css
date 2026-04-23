@@ -1,0 +1,50 @@
+.card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-gray-200);
+  overflow: hidden;
+  transition: box-shadow var(--ease-base), transform var(--ease-base);
+}
+
+/* ── Variants ── */
+.default {
+  box-shadow: var(--shadow-sm);
+}
+.default:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.flat {
+  box-shadow: none;
+}
+
+.elevated {
+  box-shadow: var(--shadow-md);
+}
+.elevated:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-3px);
+}
+
+/* Left accent bar — editorial style */
+.accent {
+  border-left: 4px solid var(--color-red);
+  box-shadow: var(--shadow-sm);
+}
+.accent:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.dark {
+  background: var(--color-navy);
+  border-color: var(--color-navy-800);
+  color: var(--color-white);
+}
+
+/* ── Padding presets ── */
+.padSm  { padding: var(--space-4); }
+.padMd  { padding: var(--space-6); }
+.padLg  { padding: var(--space-8); }
+.padNone { padding: 0; }

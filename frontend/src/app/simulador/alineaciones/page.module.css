@@ -1,0 +1,298 @@
+/* ── Page ────────────────────────────────────────────────────────────────── */
+.page {
+  padding: var(--space-8) 0 var(--space-16);
+}
+
+.hero {
+  background: var(--color-navy);
+  color: #fff;
+  padding: var(--space-8) 0 var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.heroTitle {
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-4);
+}
+
+/* ── Match selector ──────────────────────────────────────────────────────── */
+.matchSelectWrap {
+  position: relative;
+  max-width: 560px;
+}
+
+.matchSelect {
+  width: 100%;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.matchSelect:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.matchSelect option {
+  background: var(--color-navy);
+  color: #fff;
+}
+
+.matchSelectChevron {
+  position: absolute;
+  right: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+}
+
+/* ── Formation headers ───────────────────────────────────────────────────── */
+.pitchContainer {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.teamHeaders {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+  gap: var(--space-4);
+}
+
+.teamHeaderLocal,
+.teamHeaderVisitante {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.teamHeaderVisitante {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.teamName {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--color-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.teamNameDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.teamNameDotLocal    { background: var(--color-navy); }
+.teamNameDotVisitante { background: var(--color-red); }
+
+.formationSelect {
+  appearance: none;
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  cursor: pointer;
+  outline: none;
+}
+
+.formationSelect:focus {
+  border-color: var(--color-navy);
+}
+
+/* ── Pitch SVG ───────────────────────────────────────────────────────────── */
+.pitchSvgWrap {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  cursor: default;
+}
+
+/* ── Player circle (SVG text) ────────────────────────────────────────────── */
+.playerCircle {
+  cursor: pointer;
+}
+
+.playerCircle:hover circle {
+  filter: brightness(1.2);
+}
+
+/* ── Simular button ──────────────────────────────────────────────────────── */
+.simularWrap {
+  max-width: 820px;
+  margin: var(--space-6) auto 0;
+  display: flex;
+  justify-content: center;
+}
+
+.btnSimular {
+  background: var(--color-red);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-10);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 16px rgba(208, 2, 27, 0.3);
+  transition: opacity 0.15s, transform 0.1s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btnSimular:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+/* ── Drawer overlay ──────────────────────────────────────────────────────── */
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 40;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Drawer panel ────────────────────────────────────────────────────────── */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 340px;
+  background: #fff;
+  border-left: 3px solid var(--color-navy);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.2s ease;
+  box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-gray-100);
+  background: var(--color-navy);
+  color: #fff;
+}
+
+.drawerTitle {
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.drawerClose {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.1s;
+}
+
+.drawerClose:hover { color: #fff; }
+
+.drawerList {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2) 0;
+}
+
+.drawerItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-gray-100);
+  transition: background 0.1s;
+}
+
+.drawerItem:hover { background: var(--color-gray-50); }
+.drawerItem:last-child { border-bottom: none; }
+
+.drawerItemDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.drawerItemDisabled:hover { background: none; }
+
+.drawerItemInfo { flex: 1; min-width: 0; }
+
+.drawerItemNombre {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawerItemMeta {
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawerItemValue {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  flex-shrink: 0;
+}
+
+.drawerEmpty {
+  text-align: center;
+  padding: var(--space-12) var(--space-4);
+  color: var(--color-gray-400);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .drawer { width: 100%; border-left: none; }
+}

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import simulador, quiniela, torneo, alineaciones
+from app.api.routes import simulador, quiniela, torneo, alineaciones, trivia
 
 app = FastAPI(
     title="Mundial 2026 API",
@@ -21,6 +21,7 @@ app.include_router(simulador.router, prefix="/api/v1")
 app.include_router(quiniela.router, prefix="/api/v1")
 app.include_router(torneo.router, prefix="/api/v1")
 app.include_router(alineaciones.router, prefix="/api/v1")
+app.include_router(trivia.router,      prefix="/api/v1")
 
 
 @app.get("/health")

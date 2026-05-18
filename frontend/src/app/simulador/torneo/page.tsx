@@ -7,6 +7,7 @@ import {
   simularTodos,
   getMejoresTerceros,
   simularKO,
+  calcularEscenarios,
 } from "@/lib/api";
 import type {
   GrupoFixtureT,
@@ -14,8 +15,220 @@ import type {
   SimularGrupoResponse,
   ResultadoPartido,
   SimularKOResponse,
+  EscenariosResponse,
+  PartidoFixtureT,
 } from "@/lib/types";
 import styles from "./page.module.css";
+
+// ─── Escenarios section ───────────────────────────────────────────────────────
+
+interface EscenariosMatch {
+  partido_id: string;
+  fecha: string;
+  nombre_a: string;
+  codigo_a: string;
+  nombre_b: string;
+  codigo_b: string;
+  goles_a: string;
+  goles_b: string;
+}
+
+function EscenariosSection({ grupos }: { grupos: GrupoFixtureT[] }) {
+  const [equipoCodigo, setEquipoCodigo] = useState("");
+  const [matches, setMatches]           = useState<EscenariosMatch[]>([]);
+  const [resultado, setResultado]       = useState<EscenariosResponse | null>(null);
+  const [calculando, setCalculando]     = useState(false);
+
+  // All 48 teams sorted alphabetically
+  const allTeams = grupos
+    .flatMap((g) => g.equipos)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+
+  // When team selected, find their 3 matches
+  useEffect(() => {
+    if (!equipoCodigo || !grupos.length) {
+      setMatches([]);
+      setResultado(null);
+      return;
+    }
+    setResultado(null);
+    const grupo = grupos.find((g) =>
+      g.equipos.some((e) => e.codigo === equipoCodigo)
+    );
+    if (!grupo) return;
+    const teamMatches: EscenariosMatch[] = grupo.partidos
+      .filter(
+        (p: PartidoFixtureT) =>
+          p.equipo_a.codigo === equipoCodigo || p.equipo_b.codigo === equipoCodigo
+      )
+      .map((p: PartidoFixtureT) => ({
+        partido_id: p.id,
+        fecha: p.fecha,
+        nombre_a: p.equipo_a.nombre,
+        codigo_a: p.equipo_a.codigo,
+        nombre_b: p.equipo_b.nombre,
+        codigo_b: p.equipo_b.codigo,
+        goles_a: "",
+        goles_b: "",
+      }));
+    setMatches(teamMatches);
+  }, [equipoCodigo, grupos]);
+
+  function setScore(idx: number, side: "a" | "b", val: string) {
+    setMatches((prev) =>
+      prev.map((m, i) =>
+        i === idx ? { ...m, [`goles_${side}`]: val } : m
+      )
+    );
+  }
+
+  async function handleCalcular() {
+    if (!equipoCodigo) return;
+    setCalculando(true);
+    setResultado(null);
+    try {
+      const resultados = matches.map((m) => ({
+        partido_id: m.partido_id,
+        goles_local: m.goles_a !== "" ? parseInt(m.goles_a) : null,
+        goles_visitante: m.goles_b !== "" ? parseInt(m.goles_b) : null,
+      }));
+      const res = await calcularEscenarios(equipoCodigo, resultados);
+      setResultado(res);
+    } finally {
+      setCalculando(false);
+    }
+  }
+
+  const estadoIcon = resultado?.estado === "clasifica" ? "✅"
+    : resultado?.estado === "eliminado" ? "❌" : "⚠️";
+
+  const estadoClass =
+    resultado?.estado === "clasifica" ? styles.escEstadoOk
+    : resultado?.estado === "eliminado" ? styles.escEstadoNo
+    : styles.escEstadoDep;
+
+  return (
+    <div className={styles.escenariosSection}>
+      <div className="container">
+        <div className={styles.escenariosHeader}>
+          <h2 className={styles.escenariosTitle}>¿Qué necesita mi equipo para clasificar?</h2>
+          <p className={styles.escenariosSubtitle}>
+            Ingresa los resultados de tu selección y calcula en cuántos escenarios avanza a eliminatorias.
+          </p>
+        </div>
+
+        {/* Team selector */}
+        <div className={styles.escTeamRow}>
+          <div className={styles.escSelectWrapper}>
+            <select
+              className={styles.escSelect}
+              value={equipoCodigo}
+              onChange={(e) => setEquipoCodigo(e.target.value)}
+            >
+              <option value="">Elige tu equipo…</option>
+              {allTeams.map((t) => (
+                <option key={t.codigo} value={t.codigo}>{t.nombre}</option>
+              ))}
+            </select>
+            <span className={styles.escSelectArrow}>▼</span>
+          </div>
+        </div>
+
+        {/* Match inputs */}
+        {matches.length > 0 && (
+          <div className={styles.escMatches}>
+            {matches.map((m, idx) => (
+              <div key={m.partido_id} className={styles.escMatchRow}>
+                <span className={styles.escMatchDate}>{m.fecha}</span>
+                <span className={`${styles.escMatchTeam} ${styles.escMatchTeamA}`}>{m.nombre_a}</span>
+                <div className={styles.escScoreWrap}>
+                  <input
+                    type="number" min={0} max={99}
+                    className={styles.escScoreInput}
+                    value={m.goles_a}
+                    onChange={(e) => setScore(idx, "a", e.target.value)}
+                    placeholder="–"
+                  />
+                  <span className={styles.escScoreSep}>:</span>
+                  <input
+                    type="number" min={0} max={99}
+                    className={styles.escScoreInput}
+                    value={m.goles_b}
+                    onChange={(e) => setScore(idx, "b", e.target.value)}
+                    placeholder="–"
+                  />
+                </div>
+                <span className={styles.escMatchTeam}>{m.nombre_b}</span>
+              </div>
+            ))}
+
+            <div className={styles.escCalcWrap}>
+              <button
+                className={styles.btnCalcular}
+                onClick={handleCalcular}
+                disabled={calculando}
+              >
+                {calculando ? "Calculando…" : "CALCULAR ESCENARIOS"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Result */}
+        {resultado && (
+          <div className={`${styles.escResultado} ${estadoClass}`}>
+            <div className={styles.escResultadoTop}>
+              <span className={styles.escEstadoIcon}>{estadoIcon}</span>
+              <p className={styles.escMensaje}>{resultado.mensaje}</p>
+            </div>
+
+            {resultado.estado === "depende" && resultado.escenarios_descripcion.length > 0 && (
+              <div className={styles.escEscenarios}>
+                <div className={styles.escEscenariosLabel}>Escenarios favorables (muestra)</div>
+                <ul className={styles.escEscenariosLista}>
+                  {resultado.escenarios_descripcion.map((d, i) => (
+                    <li key={i}>{d}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Group table */}
+            {resultado.tabla_actual.length > 0 && (
+              <div className={styles.escTablaWrap}>
+                <div className={styles.escTablaLabel}>Tabla del grupo (con los resultados ingresados)</div>
+                <table className={styles.escTabla}>
+                  <thead>
+                    <tr>
+                      <th>Pos</th><th>Selección</th>
+                      <th>PJ</th><th>PG</th><th>PE</th><th>PP</th>
+                      <th>DG</th><th>Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resultado.tabla_actual.map((fila) => (
+                      <tr
+                        key={fila.codigo}
+                        className={fila.codigo === equipoCodigo ? styles.escTablaRowHighlight : ""}
+                      >
+                        <td>{fila.posicion}</td>
+                        <td>{fila.nombre}</td>
+                        <td>{fila.pj}</td><td>{fila.pg}</td>
+                        <td>{fila.pe}</td><td>{fila.pp}</td>
+                        <td>{fila.dg > 0 ? `+${fila.dg}` : fila.dg}</td>
+                        <td className={styles.escTablapts}>{fila.pts}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ─── Bracket seeding ──────────────────────────────────────────────────────────
 // 32 teams → R32 (16) → Octavos (8) → Cuartos (4) → Semis (2) → Final (1)
@@ -472,6 +685,15 @@ export default function TorneoPage() {
 
   return (
     <div className={styles.page}>
+      {/* ── Escenarios ── */}
+      <EscenariosSection grupos={grupos} />
+
+      <div className={styles.sectionDivider}>
+        <div className="container">
+          <div className={styles.dividerLine} />
+        </div>
+      </div>
+
       <div className={styles.hero}>
         <div className="container">
           <div className={styles.heroInner}>

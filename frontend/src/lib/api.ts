@@ -150,3 +150,12 @@ export const simularKO = (codigo_a: string, codigo_b: string) =>
     method: "POST",
     body: JSON.stringify({ codigo_a, codigo_b }),
   });
+
+export const calcularEscenarios = (
+  equipo_codigo: string,
+  resultados: import("./types").ResultadoEscenario[]
+) =>
+  fetchAPI<import("./types").EscenariosResponse>("/torneo/calcular-escenarios", {
+    method: "POST",
+    body: JSON.stringify({ equipo_codigo, resultados }),
+  });

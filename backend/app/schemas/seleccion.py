@@ -15,3 +15,10 @@ class SeleccionRead(SeleccionBase):
     id: int
 
     model_config = {"from_attributes": True}
+
+
+class SeleccionMundialRead(SeleccionBase):
+    id: int
+    grupo: str
+
+    model_config = {"from_attributes": True}

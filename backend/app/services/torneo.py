@@ -1,5 +1,6 @@
 import random
 import math
+from itertools import product as itertools_product
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 from app.models.seleccion import Seleccion
@@ -8,6 +9,7 @@ from app.schemas.torneo import (
     ResultadoPartido, FilaTabla,
     SimularGrupoResponse, SimularTodosResponse,
     MejoresTercerosResponse, SimularKOResponse,
+    ResultadoEscenario, EscenariosResponse, FilaTablaEscenario,
 )
 
 # ─── Fixture hardcodeado ──────────────────────────────────────────────────────
@@ -509,4 +511,145 @@ async def simular_partido_ko(
         penales=True,
         penales_a=pen_a,
         penales_b=pen_b,
+    )
+
+
+def calcular_escenarios(
+    equipo_codigo: str,
+    resultados_input: list[ResultadoEscenario],
+) -> EscenariosResponse:
+    # Find group
+    grupo_nombre: str | None = None
+    for g in _FIXTURE_RAW:
+        if equipo_codigo in [c for _, c in g["equipos"]]:
+            grupo_nombre = g["nombre"]
+            break
+    if not grupo_nombre:
+        raise ValueError(f"Equipo '{equipo_codigo}' no encontrado en el fixture")
+
+    equipos = _EQUIPOS_POR_GRUPO[grupo_nombre]
+    partidos_def = _PARTIDOS_POR_GRUPO[grupo_nombre]
+    nombres: dict[str, str] = {c: n for n, c in equipos}
+
+    # Only include results where both goals are provided
+    team_results: dict[str, tuple[int, int]] = {
+        r.partido_id: (r.goles_local, r.goles_visitante)
+        for r in resultados_input
+        if r.goles_local is not None and r.goles_visitante is not None
+    }
+
+    # Matches not involving the selected team
+    other_partidos = [
+        p for p in partidos_def
+        if p["codigo_a"] != equipo_codigo and p["codigo_b"] != equipo_codigo
+    ]
+
+    # Possible outcomes: home win, draw, away win
+    OUTCOMES = [(1, 0), (0, 0), (0, 1)]
+
+    def calc_table(extra: dict[str, tuple[int, int]]) -> list[dict]:
+        all_r = {**team_results, **extra}
+        stats: dict[str, dict] = {
+            c: {"nombre": nombres[c], "codigo": c,
+                "pj": 0, "pg": 0, "pe": 0, "pp": 0,
+                "gf": 0, "gc": 0, "pts": 0}
+            for _, c in equipos
+        }
+        for p in partidos_def:
+            r = all_r.get(p["id"])
+            if r is None:
+                continue
+            ga, gb = r
+            ca, cb = p["codigo_a"], p["codigo_b"]
+            stats[ca]["pj"] += 1; stats[cb]["pj"] += 1
+            stats[ca]["gf"] += ga; stats[ca]["gc"] += gb
+            stats[cb]["gf"] += gb; stats[cb]["gc"] += ga
+            if ga > gb:
+                stats[ca]["pg"] += 1; stats[ca]["pts"] += 3; stats[cb]["pp"] += 1
+            elif ga < gb:
+                stats[cb]["pg"] += 1; stats[cb]["pts"] += 3; stats[ca]["pp"] += 1
+            else:
+                stats[ca]["pe"] += 1; stats[ca]["pts"] += 1
+                stats[cb]["pe"] += 1; stats[cb]["pts"] += 1
+        for s in stats.values():
+            s["dg"] = s["gf"] - s["gc"]
+        return sorted(stats.values(), key=lambda s: (-s["pts"], -s["dg"], -s["gf"]))
+
+    # Current standings with only team's results applied
+    current_table = calc_table({})
+    team_pts = next((s["pts"] for s in current_table if s["codigo"] == equipo_codigo), 0)
+    team_current_pos = next((i for i, s in enumerate(current_table) if s["codigo"] == equipo_codigo), 3)
+
+    # Enumerate all combinations of other match outcomes
+    n = len(other_partidos)
+    favorable = 0
+    total = 0
+    favorable_scenarios: list[str] = []
+
+    for combo in itertools_product(range(3), repeat=n):
+        extra: dict[str, tuple[int, int]] = {}
+        parts: list[str] = []
+        for idx, outcome_idx in enumerate(combo):
+            p = other_partidos[idx]
+            ga, gb = OUTCOMES[outcome_idx]
+            extra[p["id"]] = (ga, gb)
+            na = nombres.get(p["codigo_a"], p["codigo_a"])
+            nb = nombres.get(p["codigo_b"], p["codigo_b"])
+            if ga > gb:
+                parts.append(f"{na} gana a {nb}")
+            elif ga < gb:
+                parts.append(f"{nb} gana a {na}")
+            else:
+                parts.append(f"{na} empata con {nb}")
+
+        table = calc_table(extra)
+        pos = next((i for i, s in enumerate(table) if s["codigo"] == equipo_codigo), 3)
+        total += 1
+        if pos < 2:
+            favorable += 1
+            if len(favorable_scenarios) < 6:
+                favorable_scenarios.append(", ".join(parts))
+
+    if total == 0:
+        total = 1
+        favorable = 1 if team_current_pos < 2 else 0
+
+    nombre_equipo = nombres.get(equipo_codigo, equipo_codigo)
+
+    if favorable == total:
+        estado = "clasifica"
+        mensaje = f"¡Con estos resultados, {nombre_equipo} CLASIFICA al eliminatorio en todos los escenarios posibles!"
+        escenarios_desc: list[str] = []
+    elif favorable == 0:
+        estado = "eliminado"
+        mensaje = f"{nombre_equipo} queda ELIMINADO con estos resultados sin importar el resto de partidos del grupo."
+        escenarios_desc = []
+    else:
+        estado = "depende"
+        pct = int((favorable / total) * 100)
+        mensaje = (
+            f"{nombre_equipo} tiene {team_pts} punto(s) y puede clasificar "
+            f"en {favorable} de {total} escenarios posibles ({pct}%). "
+            f"Necesita ayuda del resto del grupo."
+        )
+        escenarios_desc = favorable_scenarios
+
+    tabla_actual = [
+        FilaTablaEscenario(
+            nombre=s["nombre"], codigo=s["codigo"], pts=s["pts"],
+            pj=s["pj"], pg=s["pg"], pe=s["pe"], pp=s["pp"],
+            gf=s["gf"], gc=s["gc"], dg=s["dg"], posicion=i + 1,
+        )
+        for i, s in enumerate(current_table)
+    ]
+
+    return EscenariosResponse(
+        estado=estado,
+        puntos=team_pts,
+        posicion_actual=team_current_pos + 1,
+        mensaje=mensaje,
+        escenarios_favorables=favorable,
+        escenarios_totales=total,
+        escenarios_descripcion=escenarios_desc,
+        tabla_actual=tabla_actual,
     )

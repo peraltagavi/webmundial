@@ -84,3 +84,41 @@ class SimularKOResponse(BaseModel):
     penales: bool = False
     penales_a: int | None = None
     penales_b: int | None = None
+
+
+# ─── Escenarios ───────────────────────────────────────────────────────────────
+
+class ResultadoEscenario(BaseModel):
+    partido_id: str
+    goles_local: int | None = None
+    goles_visitante: int | None = None
+
+
+class FilaTablaEscenario(BaseModel):
+    nombre: str
+    codigo: str
+    pts: int
+    pj: int
+    pg: int
+    pe: int
+    pp: int
+    gf: int
+    gc: int
+    dg: int
+    posicion: int
+
+
+class EscenariosRequest(BaseModel):
+    equipo_codigo: str
+    resultados: list[ResultadoEscenario]
+
+
+class EscenariosResponse(BaseModel):
+    estado: str  # "clasifica" | "eliminado" | "depende"
+    puntos: int
+    posicion_actual: int
+    mensaje: str
+    escenarios_favorables: int
+    escenarios_totales: int
+    escenarios_descripcion: list[str]
+    tabla_actual: list[FilaTablaEscenario]

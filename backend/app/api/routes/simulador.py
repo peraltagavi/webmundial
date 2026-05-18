@@ -4,7 +4,7 @@ from sqlalchemy import select
 from app.db.session import get_db
 from app.models.seleccion import Seleccion
 from app.models.jugador import Jugador
-from app.schemas.seleccion import SeleccionRead
+from app.schemas.seleccion import SeleccionRead, SeleccionMundialRead
 from app.schemas.partido import SimularPartidoRequest, SimularPartidoResponse
 from app.schemas.comparador import ComparadorResponse
 from app.schemas.partido_simulador import (
@@ -13,14 +13,33 @@ from app.schemas.partido_simulador import (
     SimularPorCodigoResponse,
 )
 from app.services import simulador as svc
+from app.data.equipos import EQUIPOS_MUNDIAL_2026, CODIGOS_2026, GRUPOS_2026
 
 router = APIRouter(prefix="/simulador", tags=["simulador"])
 
 
-@router.get("/selecciones", response_model=list[SeleccionRead])
+@router.get("/selecciones", response_model=list[SeleccionMundialRead])
 async def listar_selecciones(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Seleccion).order_by(Seleccion.ranking_fifa))
-    return result.scalars().all()
+    result = await db.execute(
+        select(Seleccion).where(Seleccion.codigo_fifa.in_(CODIGOS_2026))
+    )
+    sels = {s.codigo_fifa: s for s in result.scalars().all()}
+    ordered = sorted(EQUIPOS_MUNDIAL_2026, key=lambda e: e["nombre"])
+    return [
+        SeleccionMundialRead(
+            id=sels[e["codigo"]].id,
+            nombre=sels[e["codigo"]].nombre,
+            codigo_fifa=e["codigo"],
+            confederacion=sels[e["codigo"]].confederacion,
+            ranking_fifa=sels[e["codigo"]].ranking_fifa,
+            puntos_fifa=sels[e["codigo"]].puntos_fifa,
+            puntos_fifa_ant=sels[e["codigo"]].puntos_fifa_ant,
+            posicion_anterior=sels[e["codigo"]].posicion_anterior,
+            grupo=e["grupo"],
+        )
+        for e in ordered
+        if e["codigo"] in sels
+    ]
 
 
 @router.get("/selecciones/{seleccion_id}/stats")

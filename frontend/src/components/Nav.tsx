@@ -5,12 +5,8 @@ import { usePathname } from "next/navigation";
 import styles from "./Nav.module.css";
 
 const links = [
-  { href: "/simulador",            label: "Simulador",   exact: true },
-  { href: "/simulador/comparador", label: "Comparador" },
-  { href: "/simulador/partidos",   label: "Partidos" },
-  { href: "/simulador/torneo",        label: "Torneo" },
-  { href: "/simulador/alineaciones",  label: "Alineaciones" },
-  { href: "/quiniela",             label: "Quiniela" },
+  { href: "/simulador", label: "Simulador", exact: false },
+  { href: "/quiniela",  label: "Quiniela",  exact: false },
 ];
 
 export default function Nav() {

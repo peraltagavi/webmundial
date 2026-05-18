@@ -1,9 +1,27 @@
-/* ── Hero ─────────────────────────────────────────────────────────────────── */
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── Hero section ────────────────────────────────────────────────────────── */
 .hero {
-  background: var(--color-navy);
-  padding: var(--space-20) 0 var(--space-24);
-  overflow: hidden;
+  background: #0A1628;
+  min-height: 90vh;
   position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Subtle grid texture */
@@ -12,224 +30,352 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 56px 56px;
   pointer-events: none;
+  z-index: 0;
 }
 
-.heroInner {
+/* Decorative "2026" behind title */
+.bg2026 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  font-size: 22vw;
+  font-weight: 900;
+  color: rgba(255,255,255,0.03);
+  letter-spacing: -0.05em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 0;
+}
+
+/* ── Inner content ───────────────────────────────────────────────────────── */
+.inner {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-10);
 }
 
-.heroBadge {
+/* ── Badge ───────────────────────────────────────────────────────────────── */
+.badgeWrap {
   margin-bottom: var(--space-6);
+  animation: fadeIn 0.5s ease-out both;
+  animation-delay: 0s;
 }
 
-.heroHeadline {
-  font-size: clamp(3rem, 8vw, 6.5rem);
-  font-weight: 900;
-  color: var(--color-white);
-  line-height: 0.92;
+.badge {
+  display: inline-block;
+  background: #D0021B;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-radius: 999px;
+}
+
+/* ── Headline ────────────────────────────────────────────────────────────── */
+.headline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 0.95;
   letter-spacing: -0.03em;
   margin-bottom: var(--space-6);
+  animation: fadeSlideUp 0.5s ease-out both;
+  animation-delay: 0.1s;
 }
 
-.heroAccent {
-  color: var(--color-red);
+.headlineWhite {
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  font-weight: 900;
+  color: #fff;
 }
 
-.heroSub {
-  font-size: clamp(var(--text-base), 2vw, var(--text-xl));
+.headlineRed {
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  font-weight: 900;
+  color: #D0021B;
+}
+
+/* ── Subtitle ────────────────────────────────────────────────────────────── */
+.sub {
+  font-size: 1.1rem;
   font-weight: 400;
-  color: var(--color-gray-400);
-  max-width: 540px;
+  color: rgba(255,255,255,0.6);
+  max-width: 500px;
   line-height: 1.6;
   margin-bottom: var(--space-10);
+  animation: fadeIn 0.5s ease-out both;
+  animation-delay: 0.3s;
 }
 
-.heroCta {
+/* ── CTA Cards ───────────────────────────────────────────────────────────── */
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 700px;
+  margin-bottom: var(--space-8);
+  text-align: left;
+}
+
+@media (max-width: 600px) {
+  .cards { grid-template-columns: 1fr; }
+}
+
+/* Shared card base */
+.cardSim,
+.cardQui {
   display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
+  flex-direction: column;
+  border-radius: 14px;
+  padding: 24px;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-/* ── Stats strip ─────────────────────────────────────────────────────────── */
-.statsStrip {
-  background: var(--color-gray-50);
-  border-bottom: 1px solid var(--color-gray-200);
-  padding: var(--space-5) 0;
+/* Card 1 — Simulador (white) */
+.cardSim {
+  background: #fff;
+  border: 2px solid transparent;
+  color: #0A1628;
+  animation: fadeSlideUp 0.5s ease-out both;
+  animation-delay: 0.4s;
+}
+.cardSim:hover {
+  border-color: #D0021B;
+  transform: scale(1.01);
+  box-shadow: 0 12px 40px rgba(208,2,27,0.18);
 }
 
-.statsInner {
+/* Card 2 — Quiniela (navy) */
+.cardQui {
+  background: #0A1628;
+  border: 2px solid rgba(255,255,255,0.15);
+  color: #fff;
+  animation: fadeSlideUp 0.5s ease-out both;
+  animation-delay: 0.55s;
+}
+.cardQui:hover {
+  border-color: rgba(255,255,255,0.9);
+  transform: scale(1.01);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+}
+
+/* Corner number */
+.cardNum {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 4rem;
+  font-weight: 900;
+  color: rgba(10,22,40,0.08);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  user-select: none;
+}
+
+.cardNumWhite {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 4rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.08);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  user-select: none;
+}
+
+/* Icons */
+.cardIcon {
+  color: #0A1628;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.cardIconWhite {
+  color: #fff;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+/* Card title */
+.cardTitle {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #0A1628;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.cardTitleWhite {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+/* Card description */
+.cardDesc {
+  font-size: 0.85rem;
+  color: #4B5563;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.cardDescWhite {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* Feature lists */
+.featureList,
+.featureListWhite {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.featureItem {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.featureList .featureItem { color: #374151; }
+.featureListWhite .featureItem { color: rgba(255,255,255,0.75); }
+
+.checkRed {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: #D0021B;
+  flex-shrink: 0;
+}
+
+.checkWhite {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.9);
+  flex-shrink: 0;
+}
+
+/* CTA buttons inside cards */
+.btnSim,
+.btnQui {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  padding: 14px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-align: center;
+  margin-top: auto;
+}
+
+.btnSim {
+  background: #D0021B;
+  color: #fff;
+}
+
+.btnQui {
+  background: #fff;
+  color: #0A1628;
+}
+
+/* ── Stats bar ───────────────────────────────────────────────────────────── */
+.statsBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  max-width: 700px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 20px 32px;
+  animation: fadeIn 0.5s ease-out both;
+  animation-delay: 0.7s;
   flex-wrap: wrap;
 }
 
 .statItem {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.statItem + .statItem {
+  border-left: 1px solid rgba(255,255,255,0.12);
 }
 
 .statValue {
-  font-size: var(--text-2xl);
+  font-size: 1.8rem;
   font-weight: 900;
-  color: var(--color-navy);
+  color: #fff;
   letter-spacing: -0.02em;
   line-height: 1;
 }
 
 .statLabel {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-gray-500);
-}
-
-.statDivider { display: none; }  /* kept for markup compat, separator via CSS */
-
-.statItem + .statItem {
-  padding-left: var(--space-8);
-  border-left: 1px solid var(--color-gray-300);
-}
-
-/* ── Sections ────────────────────────────────────────────────────────────── */
-.sections {
-  padding: var(--space-16) 0 var(--space-20);
-  background: var(--color-white);
-}
-
-.sectionHeader {
-  margin-bottom: var(--space-10);
-}
-
-.sectionLabel {
-  font-size: var(--text-xs);
+  font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-red);
-  margin-bottom: var(--space-3);
+  color: rgba(255,255,255,0.5);
+  text-align: center;
 }
 
-.sectionTitle {
-  font-size: var(--text-3xl);
-  font-weight: 800;
-  color: var(--color-navy);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-  gap: var(--space-6);
-}
-
-/* ── Feature cards ───────────────────────────────────────────────────────── */
-.featureCard {
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-gray-200);
+/* ── Flags ticker ────────────────────────────────────────────────────────── */
+.ticker {
+  width: 100%;
+  background: rgba(0,0,0,0.2);
   overflow: hidden;
-  transition: box-shadow var(--ease-base), transform var(--ease-base);
-  text-decoration: none;
-  color: inherit;
-}
-
-.featureCard:hover {
-  box-shadow: var(--shadow-xl);
-  transform: translateY(-4px);
-}
-
-.cardHeader {
-  padding: var(--space-8);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.cardHeaderSimulador { background: var(--color-navy); }
-.cardHeaderQuiniela  { background: var(--color-red); }
-
-.cardIcon {
-  font-size: 2.5rem;
-  line-height: 1;
-}
-
-.cardNumber {
-  font-size: 5rem;
-  font-weight: 900;
-  color: rgba(255,255,255,0.1);
-  line-height: 1;
-  letter-spacing: -0.05em;
-  user-select: none;
-}
-
-.cardTitle {
-  font-size: var(--text-2xl);
-  font-weight: 800;
-  color: var(--color-white);
-  letter-spacing: -0.02em;
-  margin-top: var(--space-4);
-}
-
-.cardSub {
-  font-size: var(--text-sm);
-  color: rgba(255,255,255,0.65);
-  margin-top: var(--space-2);
-}
-
-.cardBody {
-  padding: var(--space-6) var(--space-8);
-  flex: 1;
-  background: var(--color-white);
-}
-
-.featureList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
-}
-
-.featureItem {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-size: var(--text-sm);
-  color: var(--color-gray-600);
-}
-
-.featureDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-red);
+  padding: 14px 0;
+  margin-top: var(--space-10);
   flex-shrink: 0;
 }
 
-.featureDotNavy { background: var(--color-navy); }
-
-.cardCta {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--color-navy);
-  transition: gap var(--ease-fast);
+.tickerInner {
+  display: flex;
+  gap: 20px;
+  width: max-content;
+  animation: ticker 50s linear infinite;
 }
 
-.featureCard:hover .cardCta { gap: var(--space-3); }
-
-.cardCtaQuiniela { color: var(--color-red); }
+.flag {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+}

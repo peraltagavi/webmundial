@@ -6,6 +6,7 @@ from app.schemas.torneo import (
     SimularTodosRequest, SimularTodosResponse,
     MejoresTercerosRequest, MejoresTercerosResponse,
     SimularKORequest, SimularKOResponse,
+    EscenariosRequest, EscenariosResponse,
 )
 from app.services import torneo as svc
 
@@ -38,3 +39,11 @@ async def mejores_terceros(body: MejoresTercerosRequest):
 @router.post("/simular-ko", response_model=SimularKOResponse)
 async def simular_ko(body: SimularKORequest, db=Depends(get_db)):
     return await svc.simular_partido_ko(db, body.codigo_a, body.codigo_b)
+
+
+@router.post("/calcular-escenarios", response_model=EscenariosResponse)
+async def calcular_escenarios(body: EscenariosRequest):
+    try:
+        return svc.calcular_escenarios(body.equipo_codigo.upper(), body.resultados)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

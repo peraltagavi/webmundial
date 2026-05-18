@@ -129,9 +129,12 @@ async def simular_partido(
 async def _partidos_de(db: AsyncSession, codigo: str) -> list[PartidoHistorico]:
     result = await db.execute(
         select(PartidoHistorico).where(
-            or_(
-                PartidoHistorico.home_team_code == codigo,
-                PartidoHistorico.away_team_code == codigo,
+            and_(
+                or_(
+                    PartidoHistorico.home_team_code == codigo,
+                    PartidoHistorico.away_team_code == codigo,
+                ),
+                PartidoHistorico.tournament_name.ilike("%Men%"),
             )
         )
     )
@@ -150,12 +153,18 @@ def _calc_rendimiento(partidos: list[PartidoHistorico], codigo: str) -> Rendimie
             continue
         goles_favor += gf
         goles_contra += gc
-        if gf > gc:
-            ganados += 1
-        elif gf == gc:
+
+        # PE = empate normal O cualquier partido que fue a penales
+        if p.draw or p.penalty_shootout:
             empatados += 1
-        else:
-            perdidos += 1
+        # PG = ganó en tiempo regular o prórroga, SIN penales
+        elif not p.penalty_shootout:
+            won = bool(p.home_team_win if es_local else p.away_team_win)
+            if won:
+                ganados += 1
+            else:
+                perdidos += 1
+
         if p.tournament_id:
             mundiales.add(p.tournament_id)
 
@@ -232,26 +241,29 @@ async def comparador(
     if not equipo_b:
         raise ValueError(f"Selección '{codigo_b}' no encontrada")
 
-    # 2. Partidos head-to-head (ordenados por fecha desc)
+    # 2. Partidos head-to-head (ordenados por fecha desc, solo Men's)
     res_h2h = await db.execute(
         select(PartidoHistorico)
         .where(
-            or_(
-                and_(
-                    PartidoHistorico.home_team_code == codigo_a,
-                    PartidoHistorico.away_team_code == codigo_b,
+            and_(
+                or_(
+                    and_(
+                        PartidoHistorico.home_team_code == codigo_a,
+                        PartidoHistorico.away_team_code == codigo_b,
+                    ),
+                    and_(
+                        PartidoHistorico.home_team_code == codigo_b,
+                        PartidoHistorico.away_team_code == codigo_a,
+                    ),
                 ),
-                and_(
-                    PartidoHistorico.home_team_code == codigo_b,
-                    PartidoHistorico.away_team_code == codigo_a,
-                ),
+                PartidoHistorico.tournament_name.ilike("%Men%"),
             )
         )
         .order_by(PartidoHistorico.match_date.desc())
     )
     h2h_partidos = res_h2h.scalars().all()
 
-    # Calcular H2H stats
+    # Calcular H2H stats con misma lógica PG/PE/PP
     victorias_a = victorias_b = empates = goles_a = goles_b = 0
     for p in h2h_partidos:
         if p.home_team_score is None or p.away_team_score is None:
@@ -261,12 +273,14 @@ async def comparador(
         gf_b = p.away_team_score if a_es_local else p.home_team_score
         goles_a += gf_a
         goles_b += gf_b
-        if gf_a > gf_b:
-            victorias_a += 1
-        elif gf_a < gf_b:
-            victorias_b += 1
-        else:
+        if p.draw or p.penalty_shootout:
             empates += 1
+        elif not p.penalty_shootout:
+            won_a = bool(p.home_team_win if a_es_local else p.away_team_win)
+            if won_a:
+                victorias_a += 1
+            else:
+                victorias_b += 1
 
     h2h = H2HStats(
         total=len(h2h_partidos),
@@ -287,9 +301,9 @@ async def comparador(
             goles_local=p.home_team_score,
             goles_visitante=p.away_team_score,
             ronda=p.stage_name,
-            # Solo incluir penales si realmente hubo tanda
             penales_local=p.home_team_score_penalties if p.penalty_shootout else None,
             penales_visitante=p.away_team_score_penalties if p.penalty_shootout else None,
+            fue_penales=bool(p.penalty_shootout),
         )
         for p in h2h_partidos[:5]
     ]
@@ -468,15 +482,18 @@ async def probabilidades(
     res_h2h = await db.execute(
         select(PartidoHistorico)
         .where(
-            or_(
-                and_(
-                    PartidoHistorico.home_team_code == codigo_a,
-                    PartidoHistorico.away_team_code == codigo_b,
+            and_(
+                or_(
+                    and_(
+                        PartidoHistorico.home_team_code == codigo_a,
+                        PartidoHistorico.away_team_code == codigo_b,
+                    ),
+                    and_(
+                        PartidoHistorico.home_team_code == codigo_b,
+                        PartidoHistorico.away_team_code == codigo_a,
+                    ),
                 ),
-                and_(
-                    PartidoHistorico.home_team_code == codigo_b,
-                    PartidoHistorico.away_team_code == codigo_a,
-                ),
+                PartidoHistorico.tournament_name.ilike("%Men%"),
             )
         )
         .order_by(PartidoHistorico.match_date.desc())
@@ -490,12 +507,14 @@ async def probabilidades(
         fa = p.home_team_score if al else p.away_team_score
         fb = p.away_team_score if al else p.home_team_score
         g_a += fa; g_b += fb
-        if fa > fb:
-            v_a += 1
-        elif fa < fb:
-            v_b += 1
-        else:
+        if p.draw or p.penalty_shootout:
             emp += 1
+        elif not p.penalty_shootout:
+            won_a = bool(p.home_team_win if al else p.away_team_win)
+            if won_a:
+                v_a += 1
+            else:
+                v_b += 1
     h2h = H2HStats(total=len(h2h_partidos), victorias_a=v_a, victorias_b=v_b,
                    empates=emp, goles_a=g_a, goles_b=g_b)
 

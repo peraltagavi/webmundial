@@ -10,6 +10,7 @@ import {
   getLideres,
 } from "@/lib/api";
 import type { QuinielaUsuario, QuinielaPartido, PickRead, LiderEntry } from "@/lib/types";
+import TriviaSection from "./components/TriviaSection";
 
 // ── Flag emoji helper ─────────────────────────────────────────────────────────
 
@@ -367,9 +368,18 @@ function PicksScreen({ usuario, onLogout }: { usuario: QuinielaUsuario; onLogout
 // Main page — router between screens
 // ─────────────────────────────────────────────────────────────────────────────
 
+const SECTIONS = [
+  { id: "picks",  label: "Quiniela" },
+  { id: "trivia", label: "Trivia" },
+] as const;
+
+type SectionId = (typeof SECTIONS)[number]["id"];
+
 export default function QuinielaPage() {
   const [usuario, setUsuario] = useState<QuinielaUsuario | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [activeSection, setActiveSection] = useState<SectionId>("picks");
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem(LS_KEY);
@@ -382,6 +392,30 @@ export default function QuinielaPage() {
     }
     setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (!usuario) return;
+    const callback: IntersectionObserverCallback = (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id as SectionId);
+        }
+      }
+    };
+    observerRef.current = new IntersectionObserver(callback, {
+      rootMargin: "-30% 0px -60% 0px",
+      threshold: 0,
+    });
+    for (const { id } of SECTIONS) {
+      const el = document.getElementById(id);
+      if (el) observerRef.current.observe(el);
+    }
+    return () => observerRef.current?.disconnect();
+  }, [usuario]);
+
+  function scrollTo(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   function handleLogin(u: QuinielaUsuario) {
     setUsuario(u);
@@ -396,5 +430,38 @@ export default function QuinielaPage() {
 
   if (!usuario) return <RegScreen onLogin={handleLogin} />;
 
-  return <PicksScreen usuario={usuario} onLogout={handleLogout} />;
+  return (
+    <>
+      {/* Sticky mini-navbar */}
+      <nav className={styles.miniNav} aria-label="Secciones de la quiniela">
+        <div className={`container ${styles.miniNavInner}`}>
+          {SECTIONS.map(({ id, label }) => (
+            <button
+              key={id}
+              className={`${styles.miniNavLink} ${activeSection === id ? styles.miniNavLinkActive : ""}`}
+              onClick={() => scrollTo(id)}
+              aria-current={activeSection === id ? "true" : undefined}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Section 1 — Picks */}
+      <section id="picks">
+        <PicksScreen usuario={usuario} onLogout={handleLogout} />
+      </section>
+
+      {/* Divider */}
+      <div className={styles.sectionDivider} aria-hidden>
+        <span className={styles.sectionDividerTitle}>Trivia Mundial</span>
+      </div>
+
+      {/* Section 2 — Trivia */}
+      <section id="trivia">
+        <TriviaSection />
+      </section>
+    </>
+  );
 }

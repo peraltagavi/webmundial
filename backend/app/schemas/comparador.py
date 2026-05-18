@@ -23,6 +23,7 @@ class PartidoResumen(BaseModel):
     ronda: str | None
     penales_local: int | None
     penales_visitante: int | None
+    fue_penales: bool
 
 
 class Rendimiento(BaseModel):

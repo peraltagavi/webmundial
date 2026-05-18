@@ -1,0 +1,509 @@
+/* ── Home screen ─────────────────────────────────────────────────────────── */
+.homeHero {
+  background: var(--color-navy);
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-6);
+}
+
+.homeCard {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: var(--space-10) var(--space-8);
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.3);
+}
+
+.homeLogo {
+  display: block;
+  margin-bottom: var(--space-6);
+}
+
+.homeLogoEl  { font-size: 1.4rem; font-weight: 900; color: var(--color-navy); letter-spacing: -0.03em; }
+.homeLogoSim { font-size: 1.4rem; font-weight: 900; color: var(--color-red);  letter-spacing: -0.03em; }
+
+.homeTitle {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-2);
+}
+
+.homeSub {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+  margin-bottom: var(--space-8);
+}
+
+.btnPlay {
+  background: var(--color-red);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-12);
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  box-shadow: 0 4px 20px rgba(208, 2, 27, 0.35);
+}
+
+.btnPlay:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+}
+
+/* ── Records section ────────────────────────────────────────────────────── */
+.recordsSection {
+  background: var(--color-gray-50);
+  padding: var(--space-12) var(--space-6);
+}
+
+.recordsInner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.recordsTitle {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gray-400);
+  margin-bottom: var(--space-4);
+  text-align: center;
+}
+
+.recordsTable {
+  background: #fff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1.5px solid var(--color-gray-100);
+}
+
+.recordsHead {
+  display: grid;
+  grid-template-columns: 36px 1fr 80px 80px 100px;
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-navy);
+  color: rgba(255,255,255,0.65);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.recordsRow {
+  display: grid;
+  grid-template-columns: 36px 1fr 80px 80px 100px;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-gray-100);
+  font-size: 0.82rem;
+  align-items: center;
+}
+
+.recordsRow:last-child { border-bottom: none; }
+.recordsRow:nth-child(even) { background: var(--color-gray-50); }
+
+.recordPos {
+  font-weight: 800;
+  color: var(--color-gray-400);
+  font-size: 0.75rem;
+}
+
+.recordNombre {
+  font-weight: 700;
+  color: var(--color-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recordPts {
+  font-weight: 800;
+  color: var(--color-navy);
+  text-align: center;
+}
+
+.recordRacha {
+  font-weight: 600;
+  color: var(--color-gray-500);
+  text-align: center;
+}
+
+.recordFecha {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  text-align: right;
+}
+
+.recordsEmpty {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--color-gray-400);
+  font-size: 0.85rem;
+}
+
+/* ── Playing screen ─────────────────────────────────────────────────────── */
+.playScreen {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8) var(--space-4) var(--space-12);
+}
+
+/* Timer */
+.timerWrap {
+  margin-bottom: var(--space-6);
+  text-align: center;
+}
+
+.timer {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--color-navy);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+
+.timerUrgent {
+  color: var(--color-red);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Progress */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-gray-500);
+}
+
+.progressBar {
+  flex: 1;
+  max-width: 260px;
+  height: 4px;
+  background: var(--color-gray-100);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-navy);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.streakBadge {
+  background: #fef9c3;
+  color: #854d0e;
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* Question card */
+.questionCard {
+  background: #fff;
+  border: 1.5px solid var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-6) var(--space-5);
+  max-width: 640px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  transition: opacity 0.2s ease;
+  margin-bottom: var(--space-4);
+}
+
+.questionCardHidden {
+  opacity: 0;
+}
+
+.diffBadge {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.diffFacil  { background: #d1fae5; color: #065f46; }
+.diffMedia  { background: #fef9c3; color: #854d0e; }
+.diffDificil { background: #fee2e2; color: #991b1b; }
+
+.questionText {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  line-height: 1.45;
+  padding-right: var(--space-12);
+}
+
+/* Options */
+.optionsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 640px;
+  width: 100%;
+  transition: opacity 0.2s ease;
+}
+
+.optionsGridHidden {
+  opacity: 0;
+}
+
+.optionBtn {
+  background: #fff;
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-navy);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.1s;
+}
+
+.optionBtn:hover:not(:disabled) {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.optionBtn:disabled {
+  cursor: default;
+}
+
+.optionCorrect {
+  background: #d1fae5 !important;
+  border-color: #059669 !important;
+  color: #065f46 !important;
+}
+
+.optionWrong {
+  background: #fee2e2 !important;
+  border-color: #dc2626 !important;
+  color: #991b1b !important;
+}
+
+.optionDimmed {
+  opacity: 0.35;
+}
+
+/* ── Result screen ──────────────────────────────────────────────────────── */
+.resultScreen {
+  min-height: 100vh;
+  background: var(--color-gray-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+}
+
+.resultCard {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: var(--space-10) var(--space-8);
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.1);
+}
+
+.resultTitle {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gray-400);
+  margin-bottom: var(--space-4);
+}
+
+.resultScore {
+  font-size: 4rem;
+  font-weight: 900;
+  color: var(--color-navy);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: var(--space-2);
+}
+
+.resultScoreSub {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+  margin-bottom: var(--space-8);
+}
+
+.resultStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.statBox {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.statLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-gray-400);
+  margin-bottom: var(--space-1);
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+}
+
+/* Save record form */
+.saveSection {
+  border-top: 1.5px solid var(--color-gray-100);
+  padding-top: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.saveTitle {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: var(--space-3);
+}
+
+.saveSub {
+  font-size: 0.78rem;
+  color: var(--color-gray-500);
+  margin-bottom: var(--space-4);
+}
+
+.saveForm {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.saveInput {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--color-navy);
+  outline: none;
+}
+
+.saveInput:focus {
+  border-color: var(--color-navy);
+}
+
+.btnSaveRecord {
+  background: var(--color-navy);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.btnSaveRecord:hover { opacity: 0.85; }
+.btnSaveRecord:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.savedMsg {
+  font-size: 0.82rem;
+  color: #065f46;
+  font-weight: 700;
+  margin-top: var(--space-2);
+}
+
+/* Buttons */
+.resultActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.btnPlayAgain {
+  background: var(--color-red);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.btnPlayAgain:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.btnHome {
+  background: none;
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btnHome:hover {
+  border-color: var(--color-navy);
+  color: var(--color-navy);
+}
+
+@media (max-width: 480px) {
+  .recordsHead,
+  .recordsRow {
+    grid-template-columns: 28px 1fr 60px 60px 80px;
+    font-size: 0.72rem;
+  }
+  .timer { font-size: 2.2rem; }
+}

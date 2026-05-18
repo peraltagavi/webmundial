@@ -7,6 +7,7 @@ export interface Seleccion {
   puntos_fifa: number | null;
   puntos_fifa_ant: number | null;
   posicion_anterior: number | null;
+  grupo?: string;
 }
 
 export interface StatsSeleccion {
@@ -120,7 +121,9 @@ export interface JugadorAlineacion {
   edad: number | null;
   valor_mercado_eur: number | null;
   internacionalidades: number | null;
+  goles_seleccion: number | null;
   numero_camiseta: number | null;
+  score: number; // 0–100, normalizado globalmente
 }
 
 // ── Torneo ───────────────────────────────────────────────────────────────────
@@ -190,6 +193,37 @@ export interface SimularKOResponse {
   penales: boolean;
   penales_a: number | null;
   penales_b: number | null;
+}
+
+export interface ResultadoEscenario {
+  partido_id: string;
+  goles_local: number | null;
+  goles_visitante: number | null;
+}
+
+export interface FilaTablaEscenario {
+  nombre: string;
+  codigo: string;
+  pts: number;
+  pj: number;
+  pg: number;
+  pe: number;
+  pp: number;
+  gf: number;
+  gc: number;
+  dg: number;
+  posicion: number;
+}
+
+export interface EscenariosResponse {
+  estado: "clasifica" | "eliminado" | "depende";
+  puntos: number;
+  posicion_actual: number;
+  mensaje: string;
+  escenarios_favorables: number;
+  escenarios_totales: number;
+  escenarios_descripcion: string[];
+  tabla_actual: FilaTablaEscenario[];
 }
 
 // ── Quiniela Picks ───────────────────────────────────────────────────────────

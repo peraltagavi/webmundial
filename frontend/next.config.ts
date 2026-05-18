@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      { source: "/simulador/comparador", destination: "/simulador#comparador", permanent: false },
+      { source: "/simulador/partidos",   destination: "/simulador#simulador-partidos", permanent: false },
+      { source: "/simulador/torneo",     destination: "/simulador#torneo", permanent: false },
+      { source: "/simulador/alineaciones", destination: "/simulador#alineaciones", permanent: false },
+      { source: "/quiniela/trivia",      destination: "/quiniela#trivia", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

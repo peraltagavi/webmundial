@@ -151,6 +151,30 @@ export const simularKO = (codigo_a: string, codigo_b: string) =>
     body: JSON.stringify({ codigo_a, codigo_b }),
   });
 
+export const getBracketEstado = () =>
+  fetchAPI<import("./types").BracketEstadoResponse>("/torneo/bracket/estado");
+
+export const simularCruce = (cruce_id: number) =>
+  fetchAPI<import("./types").BracketCruce>("/torneo/bracket/simular-cruce", {
+    method: "POST",
+    body: JSON.stringify({ cruce_id }),
+  });
+
+export const avanzarCruce = (cruce_id: number, ganador: string) =>
+  fetchAPI<import("./types").BracketCruce>("/torneo/bracket/avanzar", {
+    method: "POST",
+    body: JSON.stringify({ cruce_id, ganador }),
+  });
+
+export const limpiarCruce = (cruce_id: number) =>
+  fetchAPI<import("./types").BracketCruce>("/torneo/bracket/limpiar-cruce", {
+    method: "POST",
+    body: JSON.stringify({ cruce_id }),
+  });
+
+export const reiniciarBracket = () =>
+  fetchAPI<{ ok: boolean }>("/torneo/bracket/reiniciar", { method: "POST" });
+
 export const calcularEscenarios = (
   equipo_codigo: string,
   resultados: import("./types").ResultadoEscenario[]

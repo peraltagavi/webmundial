@@ -109,6 +109,8 @@ async def simular_por_codigo(
     if body.codigo_a.upper() == body.codigo_b.upper():
         raise HTTPException(400, "Los dos equipos deben ser distintos")
     try:
-        return await svc.simular_por_codigo(db, body.codigo_a.upper(), body.codigo_b.upper())
+        return await svc.simular_por_codigo(
+            db, body.codigo_a.upper(), body.codigo_b.upper(), body.fase
+        )
     except ValueError as e:
         raise HTTPException(404, str(e))

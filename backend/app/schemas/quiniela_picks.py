@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional
+import datetime as dt
 
 
 class RegistroRequest(BaseModel):
@@ -26,8 +27,14 @@ class PartidoPickRead(BaseModel):
     goles_local_real: Optional[int] = None
     goles_visitante_real: Optional[int] = None
     cerrado: bool
+    bloqueado: bool = False
+    fecha_hora: Optional[dt.datetime] = None
 
     model_config = {"from_attributes": True}
+
+    @field_serializer("fecha_hora")
+    def serialize_fecha_hora(self, v: Optional[dt.datetime]) -> Optional[str]:
+        return v.isoformat() if v else None
 
 
 class PickInput(BaseModel):

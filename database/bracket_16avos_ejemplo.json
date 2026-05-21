@@ -1,0 +1,20 @@
+{
+  "cruces": [
+    {"posicion":  1, "equipo_a": "MEX", "equipo_b": "CAN"},
+    {"posicion":  2, "equipo_a": "BRA", "equipo_b": "TUR"},
+    {"posicion":  3, "equipo_a": "DEU", "equipo_b": "JPN"},
+    {"posicion":  4, "equipo_a": "BEL", "equipo_b": "URY"},
+    {"posicion":  5, "equipo_a": "FRA", "equipo_b": "AUT"},
+    {"posicion":  6, "equipo_a": "PRT", "equipo_b": "HRV"},
+    {"posicion":  7, "equipo_a": "KOR", "equipo_b": "CHE"},
+    {"posicion":  8, "equipo_a": "MAR", "equipo_b": "USA"},
+    {"posicion":  9, "equipo_a": "ECU", "equipo_b": "NLD"},
+    {"posicion": 10, "equipo_a": "IRN", "equipo_b": "ESP"},
+    {"posicion": 11, "equipo_a": "SEN", "equipo_b": "ARG"},
+    {"posicion": 12, "equipo_a": "COL", "equipo_b": "ENG"},
+    {"posicion": 13, "equipo_a": "RSA", "equipo_b": "BIH"},
+    {"posicion": 14, "equipo_a": "SCO", "equipo_b": "AUS"},
+    {"posicion": 15, "equipo_a": "CIV", "equipo_b": "SWE"},
+    {"posicion": 16, "equipo_a": "EGY", "equipo_b": "NOR"}
+  ]
+}

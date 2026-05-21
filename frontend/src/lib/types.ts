@@ -96,6 +96,12 @@ export interface TeamAnalisis {
   ultimos_5: UltimoPartidoEquipo[];
 }
 
+export interface MatrizEntry {
+  i: number;
+  j: number;
+  prob: number;
+}
+
 export interface ProbabilidadesResponse {
   equipo_a: TeamAnalisis;
   equipo_b: TeamAnalisis;
@@ -103,12 +109,23 @@ export interface ProbabilidadesResponse {
   prob_empate: number;
   prob_b: number;
   total_h2h: number;
+  lambda_a: number;
+  lambda_b: number;
+  matriz: MatrizEntry[];
 }
 
 export interface SimularResponse {
   goles_a: number;
   goles_b: number;
-  ganador: string; // "a", "b", "empate"
+  ganador: string;
+  lambda_a: number;
+  lambda_b: number;
+  prob_a: number;
+  prob_empate: number;
+  prob_b: number;
+  fue_prorroga: boolean;
+  fue_penales: boolean;
+  matriz: MatrizEntry[];
 }
 
 // ── Alineaciones ─────────────────────────────────────────────────────────────
@@ -245,6 +262,8 @@ export interface QuinielaPartido {
   goles_local_real: number | null;
   goles_visitante_real: number | null;
   cerrado: boolean;
+  bloqueado: boolean;
+  fecha_hora: string | null;
 }
 
 export interface PickRead {
@@ -259,6 +278,26 @@ export interface LiderEntry {
   nombre: string;
   puntos: number;
   picks_completados: number;
+}
+
+// ── Bracket ──────────────────────────────────────────────────────────────────
+
+export interface BracketCruce {
+  id: number;
+  ronda: string;
+  posicion: number;
+  equipo_a: string | null;
+  equipo_b: string | null;
+  goles_a: number | null;
+  goles_b: number | null;
+  ganador: string | null;
+  fue_penales: boolean;
+}
+
+export interface BracketEstadoResponse {
+  desbloqueado: boolean;
+  mensaje_bloqueado: string;
+  rondas: Record<string, BracketCruce[]>;
 }
 
 // ── Comparador ──────────────────────────────────────────────────────────────

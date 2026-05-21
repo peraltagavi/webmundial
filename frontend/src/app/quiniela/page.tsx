@@ -61,6 +61,20 @@ function formatFecha(iso: string) {
 
 const LS_KEY = "quiniela_usuario";
 
+function formatCountdown(fechaHora: string): string | null {
+  const cutoff = new Date(fechaHora).getTime() - 10 * 60 * 1000;
+  const diff = cutoff - Date.now();
+  if (diff <= 0) return null;
+  const d = Math.floor(diff / 86_400_000);
+  const h = Math.floor((diff % 86_400_000) / 3_600_000);
+  const m = Math.floor((diff % 3_600_000) / 60_000);
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0 || d > 0) parts.push(`${h}h`);
+  parts.push(`${m}m`);
+  return "Cierra en " + parts.join(" · ");
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Registration screen
 // ─────────────────────────────────────────────────────────────────────────────
@@ -142,6 +156,12 @@ function PicksScreen({ usuario, onLogout }: { usuario: QuinielaUsuario; onLogout
   const [saving, setSaving]         = useState(false);
   const [savedMsg, setSavedMsg]     = useState(false);
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -173,6 +193,7 @@ function PicksScreen({ usuario, onLogout }: { usuario: QuinielaUsuario; onLogout
   }
 
   const completados = partidos.filter(p => {
+    if (p.bloqueado) return !!savedPicks[p.id];
     const v = picks[p.id];
     return v && v[0] !== "" && v[1] !== "";
   }).length;
@@ -182,6 +203,7 @@ function PicksScreen({ usuario, onLogout }: { usuario: QuinielaUsuario; onLogout
     try {
       const payload = partidos
         .filter(p => {
+          if (p.bloqueado) return false;
           const v = picks[p.id];
           return v && v[0] !== "" && v[1] !== "";
         })
@@ -231,24 +253,36 @@ function PicksScreen({ usuario, onLogout }: { usuario: QuinielaUsuario; onLogout
         <div className={styles.layout}>
           {/* Matches column */}
           <div className={styles.gruposWrap}>
+            <div className={styles.leyenda}>
+              <span className={styles.leyendaIcon}>⏰</span>
+              Los picks se bloquean 10 minutos antes de cada partido. ¡No te quedes sin participar!
+            </div>
+
             {fechas.map(fecha => (
               <div key={fecha}>
                 <p className={styles.grupoTitle}>{formatFecha(fecha)}</p>
                 {byFecha.get(fecha)!.map(partido => {
-                  const v = picks[partido.id] ?? ["", ""];
-                  const filled = v[0] !== "" && v[1] !== "";
+                  const bloqueado = partido.bloqueado;
                   const sp = savedPicks[partido.id];
+                  const displayVal: [string, string] = bloqueado && sp
+                    ? [String(sp.goles_local), String(sp.goles_visitante)]
+                    : picks[partido.id] ?? ["", ""];
+                  const v = displayVal;
+                  const filled = v[0] !== "" && v[1] !== "";
                   const pts = sp
                     ? calcPuntos(
                         sp.goles_local, sp.goles_visitante,
                         partido.goles_local_real, partido.goles_visitante_real
                       )
                     : null;
+                  const countdown = !bloqueado && partido.fecha_hora
+                    ? formatCountdown(partido.fecha_hora)
+                    : null;
 
                   return (
                     <div
                       key={partido.id}
-                      className={`${styles.matchCard} ${filled ? styles.filled : ""}`}
+                      className={`${styles.matchCard} ${filled ? styles.filled : ""} ${bloqueado ? styles.matchCardLocked : ""}`}
                     >
                       {/* Local */}
                       <div className={styles.teamLocal}>
@@ -265,8 +299,9 @@ function PicksScreen({ usuario, onLogout }: { usuario: QuinielaUsuario; onLogout
                             min={0}
                             max={20}
                             value={v[0]}
-                            onChange={e => setScore(partido.id, 0, e.target.value)}
+                            onChange={e => !bloqueado && setScore(partido.id, 0, e.target.value)}
                             placeholder="–"
+                            disabled={bloqueado}
                           />
                           <span className={styles.scoreDash}>:</span>
                           <input
@@ -275,12 +310,20 @@ function PicksScreen({ usuario, onLogout }: { usuario: QuinielaUsuario; onLogout
                             min={0}
                             max={20}
                             value={v[1]}
-                            onChange={e => setScore(partido.id, 1, e.target.value)}
+                            onChange={e => !bloqueado && setScore(partido.id, 1, e.target.value)}
                             placeholder="–"
+                            disabled={bloqueado}
                           />
                         </div>
                         <div className={styles.ptsWrap}>
                           <span className={styles.matchFecha}>Grupo {partido.grupo}</span>
+                          {bloqueado ? (
+                            <span className={`${styles.ptsBadge} ${styles.badgeCerrado}`}>Cerrado</span>
+                          ) : countdown ? (
+                            <span className={styles.countdown}>{countdown}</span>
+                          ) : partido.fecha_hora ? null : (
+                            <span className={`${styles.ptsBadge} ${styles.badgeAbierto}`}>Abierto</span>
+                          )}
                           {filled && partido.cerrado && pts !== null && (
                             <span className={`${styles.ptsBadge} ${
                               pts === 3 ? styles.ptsBadge3 :
@@ -291,7 +334,7 @@ function PicksScreen({ usuario, onLogout }: { usuario: QuinielaUsuario; onLogout
                               {pts} pt{pts !== 1 ? "s" : ""}
                             </span>
                           )}
-                          {filled && !partido.cerrado && (
+                          {filled && !partido.cerrado && !bloqueado && (
                             <span className={`${styles.ptsBadge} ${styles.ptsBadgePending}`}>
                               pendiente
                             </span>

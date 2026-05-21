@@ -8,7 +8,16 @@ from app.schemas.torneo import (
     SimularKORequest, SimularKOResponse,
     EscenariosRequest, EscenariosResponse,
 )
+from app.schemas.bracket import (
+    BracketStatusResponse,
+    BracketEstadoResponse,
+    SimularCruceRequest,
+    AvanzarRequest,
+    LimpiarCruceRequest,
+    CruceRead,
+)
 from app.services import torneo as svc
+from app.services import bracket as bsvc
 
 router = APIRouter(prefix="/torneo", tags=["torneo"])
 
@@ -47,3 +56,45 @@ async def calcular_escenarios(body: EscenariosRequest):
         return svc.calcular_escenarios(body.equipo_codigo.upper(), body.resultados)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+# ─── Bracket endpoints ────────────────────────────────────────────────────────
+
+@router.get("/bracket/status", response_model=BracketStatusResponse)
+async def bracket_status(db=Depends(get_db)):
+    return await bsvc.get_bracket_status(db)
+
+
+@router.get("/bracket/estado", response_model=BracketEstadoResponse)
+async def bracket_estado(db=Depends(get_db)):
+    return await bsvc.get_bracket_estado(db)
+
+
+@router.post("/bracket/simular-cruce", response_model=CruceRead)
+async def bracket_simular_cruce(body: SimularCruceRequest, db=Depends(get_db)):
+    try:
+        return await bsvc.simular_cruce(db, body.cruce_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/bracket/avanzar", response_model=CruceRead)
+async def bracket_avanzar(body: AvanzarRequest, db=Depends(get_db)):
+    try:
+        return await bsvc.avanzar(db, body.cruce_id, body.ganador.upper())
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/bracket/limpiar-cruce", response_model=CruceRead)
+async def bracket_limpiar_cruce(body: LimpiarCruceRequest, db=Depends(get_db)):
+    try:
+        return await bsvc.limpiar_cruce(db, body.cruce_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/bracket/reiniciar")
+async def bracket_reiniciar(db=Depends(get_db)):
+    await bsvc.reiniciar_bracket(db)
+    return {"ok": True}

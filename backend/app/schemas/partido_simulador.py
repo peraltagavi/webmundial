@@ -22,6 +22,12 @@ class TeamAnalisis(BaseModel):
     ultimos_5: list[UltimoPartidoEquipo]
 
 
+class MatrizEntry(BaseModel):
+    i: int
+    j: int
+    prob: float
+
+
 class ProbabilidadesResponse(BaseModel):
     equipo_a: TeamAnalisis
     equipo_b: TeamAnalisis
@@ -29,14 +35,26 @@ class ProbabilidadesResponse(BaseModel):
     prob_empate: float
     prob_b: float
     total_h2h: int
+    lambda_a: float
+    lambda_b: float
+    matriz: list[MatrizEntry]
 
 
 class SimularPorCodigoRequest(BaseModel):
     codigo_a: str
     codigo_b: str
+    fase: str = "grupos"
 
 
 class SimularPorCodigoResponse(BaseModel):
     goles_a: int
     goles_b: int
-    ganador: str  # "a", "b", "empate"
+    ganador: str
+    lambda_a: float
+    lambda_b: float
+    prob_a: float
+    prob_empate: float
+    prob_b: float
+    fue_prorroga: bool
+    fue_penales: bool
+    matriz: list[MatrizEntry]

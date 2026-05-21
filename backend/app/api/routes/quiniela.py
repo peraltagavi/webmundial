@@ -27,7 +27,10 @@ async def listar_partidos(db: AsyncSession = Depends(get_db)):
 
 @router.post("/picks", status_code=204)
 async def guardar_picks(body: PicksRequest, db: AsyncSession = Depends(get_db)):
-    await picks_svc.save_picks(db, body.usuario_id, body.picks)
+    try:
+        await picks_svc.save_picks(db, body.usuario_id, body.picks)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Este partido ya no acepta predicciones")
 
 
 @router.get("/picks/{usuario_id}", response_model=list[PickRead])

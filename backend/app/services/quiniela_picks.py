@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.quiniela_picks import QuinielaUsuario, QuinielaPartido, QuinielaPick
-from app.schemas.quiniela_picks import RegistroRequest, PickInput
+from app.schemas.quiniela_picks import RegistroRequest, PickInput, PartidoPickRead
+from datetime import datetime, timezone, timedelta
 
 
 async def registro_o_login(db: AsyncSession, body: RegistroRequest) -> QuinielaUsuario:
@@ -18,17 +19,40 @@ async def registro_o_login(db: AsyncSession, body: RegistroRequest) -> QuinielaU
     return usuario
 
 
-async def get_partidos(db: AsyncSession) -> list[QuinielaPartido]:
+def _is_bloqueado(partido: QuinielaPartido) -> bool:
+    if partido.fecha_hora is None:
+        return False
+    cutoff = partido.fecha_hora - timedelta(minutes=10)
+    return datetime.now(timezone.utc) >= cutoff
+
+
+async def get_partidos(db: AsyncSession) -> list[PartidoPickRead]:
     result = await db.execute(
         select(QuinielaPartido).order_by(QuinielaPartido.fecha, QuinielaPartido.id)
     )
-    return list(result.scalars().all())
+    partidos = list(result.scalars().all())
+    out = []
+    for p in partidos:
+        d = PartidoPickRead.model_validate(p)
+        d.bloqueado = _is_bloqueado(p)
+        out.append(d)
+    return out
 
 
 async def save_picks(
     db: AsyncSession, usuario_id: int, picks: list[PickInput]
 ) -> None:
+    partido_ids = [p.partido_id for p in picks]
+    partidos_result = await db.execute(
+        select(QuinielaPartido).where(QuinielaPartido.id.in_(partido_ids))
+    )
+    partidos_map = {p.id: p for p in partidos_result.scalars().all()}
+
     for pick in picks:
+        partido = partidos_map.get(pick.partido_id)
+        if partido and _is_bloqueado(partido):
+            raise ValueError(f"partido:{pick.partido_id}")
+
         result = await db.execute(
             select(QuinielaPick).where(
                 QuinielaPick.usuario_id == usuario_id,

@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, and_
 from app.models.seleccion import Seleccion
 from app.models.partido_historico import PartidoHistorico
+from app.models import poisson_model as pm
+from app.data.estadisticas_historicas import STATS
 from app.schemas.partido import SimularPartidoResponse
 from app.schemas.comparador import (
     ComparadorResponse, H2HStats, PartidoResumen,
@@ -14,6 +16,7 @@ from app.schemas.partido_simulador import (
     TeamAnalisis,
     UltimoPartidoEquipo,
     SimularPorCodigoResponse,
+    MatrizEntry,
 )
 
 
@@ -218,9 +221,20 @@ async def stats_historicos(db: AsyncSession, seleccion_id: int) -> dict:
     seleccion = await db.get(Seleccion, seleccion_id)
     if not seleccion:
         return {}
-    partidos = await _partidos_de(db, seleccion.codigo_fifa)
-    r = _calc_rendimiento(partidos, seleccion.codigo_fifa)
-    return r.model_dump()
+    s = STATS.get(seleccion.codigo_fifa)
+    if not s:
+        return {}
+    return {
+        "partidos":             s["pj"],
+        "ganados":              s["pg"],
+        "empatados":            s["pe"],
+        "perdidos":             s["pp"],
+        "goles_favor":          s["gf"],
+        "goles_contra":         s["gc"],
+        "diferencia_goles":     s["dg"],
+        "porcentaje_victorias": s["porcentaje_victorias"],
+        "mundiales_disputados": s["mundiales"],
+    }
 
 
 # ─── Servicio: comparador ─────────────────────────────────────────────────────
@@ -308,12 +322,28 @@ async def comparador(
         for p in h2h_partidos[:5]
     ]
 
-    # 3. Todos los partidos de cada equipo (para rendimiento y mejor resultado)
+    # 3. Rendimiento desde stats estáticas; partidos solo para mejor resultado
+    def _stats_to_rendimiento(codigo: str) -> Rendimiento:
+        s = STATS.get(codigo, {})
+        pj = s.get("pj", 0)
+        pg = s.get("pg", 0)
+        return Rendimiento(
+            partidos=pj,
+            ganados=pg,
+            empatados=s.get("pe", 0),
+            perdidos=s.get("pp", 0),
+            goles_favor=s.get("gf", 0),
+            goles_contra=s.get("gc", 0),
+            diferencia_goles=s.get("dg", 0),
+            porcentaje_victorias=round(pg / pj * 100, 1) if pj else 0.0,
+            mundiales_disputados=s.get("mundiales", 0),
+        )
+
+    rendimiento_a = _stats_to_rendimiento(codigo_a)
+    rendimiento_b = _stats_to_rendimiento(codigo_b)
+
     partidos_a = await _partidos_de(db, codigo_a)
     partidos_b = await _partidos_de(db, codigo_b)
-
-    rendimiento_a = _calc_rendimiento(partidos_a, codigo_a)
-    rendimiento_b = _calc_rendimiento(partidos_b, codigo_b)
 
     mejor_a = _calc_mejor_resultado(partidos_a, codigo_a)
     mejor_b = _calc_mejor_resultado(partidos_b, codigo_b)
@@ -457,7 +487,7 @@ def _prob_enriquecida(
     return round(prob_a / total * 100, 1), round(prob_e / total * 100, 1), round(prob_b / total * 100, 1)
 
 
-# ─── Servicio: probabilidades enriquecidas ────────────────────────────────────
+# ─── Servicio: probabilidades con modelo Poisson ─────────────────────────────
 
 async def probabilidades(
     db: AsyncSession,
@@ -475,8 +505,15 @@ async def probabilidades(
 
     partidos_a = await _partidos_de(db, codigo_a)
     partidos_b = await _partidos_de(db, codigo_b)
-    rend_a = _calc_rendimiento(partidos_a, codigo_a)
-    rend_b = _calc_rendimiento(partidos_b, codigo_b)
+
+    def _static_wc(codigo: str) -> tuple[int, float]:
+        s = STATS.get(codigo, {})
+        pj = s.get("pj", 0)
+        pg = s.get("pg", 0)
+        return s.get("mundiales", 0), (round(pg / pj * 100, 1) if pj else 0.0)
+
+    mundiales_a, pct_vic_a = _static_wc(codigo_a)
+    mundiales_b, pct_vic_b = _static_wc(codigo_b)
 
     # H2H
     res_h2h = await db.execute(
@@ -518,9 +555,17 @@ async def probabilidades(
     h2h = H2HStats(total=len(h2h_partidos), victorias_a=v_a, victorias_b=v_b,
                    empates=emp, goles_a=g_a, goles_b=g_b)
 
-    prob_a, prob_e, prob_b = _prob_enriquecida(sel_a, sel_b, rend_a, rend_b, h2h)
+    # Probabilidades y lambdas desde el modelo Poisson
+    la, lb = pm.calcular_lambda(codigo_a, codigo_b)
+    from app.models.poisson_model import _build_matrix, _probs_from_matrix
+    cells = _build_matrix(la, lb)
+    prob_a_f, prob_e_f, prob_b_f = _probs_from_matrix(cells)
+    prob_a  = round(prob_a_f * 100, 1)
+    prob_e  = round(prob_e_f * 100, 1)
+    prob_b_ = round(prob_b_f * 100, 1)
+    matriz  = [MatrizEntry(i=i, j=j, prob=round(p, 6)) for i, j, p in cells[:9]]
 
-    def make_team(sel: Seleccion, rend: Rendimiento, partidos: list, codigo: str) -> TeamAnalisis:
+    def make_team(sel: Seleccion, mundiales: int, pct_vic: float, partidos: list, codigo: str) -> TeamAnalisis:
         return TeamAnalisis(
             nombre=sel.nombre,
             codigo_fifa=sel.codigo_fifa,
@@ -528,63 +573,51 @@ async def probabilidades(
             puntos_fifa=sel.puntos_fifa,
             goles_promedio=_calc_goles_promedio(partidos, codigo),
             porcentaje_porteria_cero=_calc_porteria_cero(partidos, codigo),
-            mundiales_disputados=rend.mundiales_disputados,
-            porcentaje_victorias=rend.porcentaje_victorias,
+            mundiales_disputados=mundiales,
+            porcentaje_victorias=pct_vic,
             ultimos_5=_ultimos_5_equipo(partidos, codigo),
         )
 
     return ProbabilidadesResponse(
-        equipo_a=make_team(sel_a, rend_a, partidos_a, codigo_a),
-        equipo_b=make_team(sel_b, rend_b, partidos_b, codigo_b),
+        equipo_a=make_team(sel_a, mundiales_a, pct_vic_a, partidos_a, codigo_a),
+        equipo_b=make_team(sel_b, mundiales_b, pct_vic_b, partidos_b, codigo_b),
         prob_a=prob_a,
         prob_empate=prob_e,
-        prob_b=prob_b,
+        prob_b=prob_b_,
         total_h2h=h2h.total,
+        lambda_a=round(la, 4),
+        lambda_b=round(lb, 4),
+        matriz=matriz,
     )
 
 
-# ─── Servicio: simulación por código FIFA ─────────────────────────────────────
+# ─── Servicio: simulación por código FIFA (modelo Poisson) ───────────────────
 
 async def simular_por_codigo(
     db: AsyncSession,
     codigo_a: str,
     codigo_b: str,
+    fase: str = "grupos",
 ) -> SimularPorCodigoResponse:
+    # Validar que existen en nuestra DB
     res_a = await db.execute(select(Seleccion).where(Seleccion.codigo_fifa == codigo_a))
     res_b = await db.execute(select(Seleccion).where(Seleccion.codigo_fifa == codigo_b))
-    sel_a = res_a.scalar_one_or_none()
-    sel_b = res_b.scalar_one_or_none()
-    if not sel_a or not sel_b:
-        raise ValueError("Selección no encontrada")
+    if not res_a.scalar_one_or_none():
+        raise ValueError(f"Selección '{codigo_a}' no encontrada")
+    if not res_b.scalar_one_or_none():
+        raise ValueError(f"Selección '{codigo_b}' no encontrada")
 
-    partidos_a = await _partidos_de(db, codigo_a)
-    partidos_b = await _partidos_de(db, codigo_b)
-
-    goles_prom_a = _calc_goles_promedio(partidos_a, codigo_a)
-    goles_prom_b = _calc_goles_promedio(partidos_b, codigo_b)
-
-    r_a = float(sel_a.ranking_fifa or 100)
-    r_b = float(sel_b.ranking_fifa or 100)
-    # Positive delta → B has worse ranking → A is stronger
-    delta = max(-0.4, min(0.4, (r_b - r_a) / 200.0))
-
-    lambda_a = max(0.3, goles_prom_a * (1.0 + delta))
-    lambda_b = max(0.3, goles_prom_b * (1.0 - delta))
-
-    goles_a = random.choices(
-        range(8),
-        weights=[math.exp(-lambda_a) * lambda_a**k / math.factorial(k) for k in range(8)],
-    )[0]
-    goles_b = random.choices(
-        range(8),
-        weights=[math.exp(-lambda_b) * lambda_b**k / math.factorial(k) for k in range(8)],
-    )[0]
-
-    if goles_a > goles_b:
-        ganador = "a"
-    elif goles_b > goles_a:
-        ganador = "b"
-    else:
-        ganador = "empate"
-
-    return SimularPorCodigoResponse(goles_a=goles_a, goles_b=goles_b, ganador=ganador)
+    res = pm.simular_partido(codigo_a, codigo_b, fase)
+    return SimularPorCodigoResponse(
+        goles_a=res["goles_a"],
+        goles_b=res["goles_b"],
+        ganador=res["ganador"].lower() if res["ganador"] in ("A", "B") else "empate",
+        lambda_a=res["lambda_a"],
+        lambda_b=res["lambda_b"],
+        prob_a=res["prob_a"],
+        prob_empate=res["prob_empate"],
+        prob_b=res["prob_b"],
+        fue_prorroga=res["fue_prorroga"],
+        fue_penales=res["fue_penales"],
+        matriz=[MatrizEntry(**m) for m in res["matriz"]],
+    )

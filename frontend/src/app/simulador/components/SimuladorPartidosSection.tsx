@@ -1,55 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { getSelecciones, getProbabilidades, simularPorCodigo } from "@/lib/api";
+import { useState, useEffect } from "react";
+import { getSelecciones, getProbabilidades } from "@/lib/api";
 import type {
   Seleccion,
   ProbabilidadesResponse,
-  SimularResponse,
-  UltimoPartidoEquipo,
 } from "@/lib/types";
 import styles from "../partidos/page.module.css";
 
-function matchDesc(ga: number, gb: number, nameA: string, nameB: string): string {
-  const total = ga + gb;
-  const diff = Math.abs(ga - gb);
-  const winner = ga > gb ? nameA : nameB;
-  if (total === 0) return "Un partido de cero a cero. Defensas impenetrables.";
-  if (ga === gb && total <= 2) return "Empate parejo. Los dos equipos se neutralizaron.";
-  if (ga === gb) return `Empate vibrante con ${total} goles en el marcador.`;
-  if (diff >= 4) return `Demolición total. ${winner} no tuvo piedad esta noche.`;
-  if (diff >= 3) return `Goleada contundente de ${winner}. Sin discusión posible.`;
-  if (total >= 6) return "¡Festival de goles! Un partido histórico en el marcador.";
-  if (total === 1) return `Un gol solitario de ${winner}. Partido extremadamente cerrado.`;
-  if (diff === 1) return "Partido intenso, definido por el mínimo margen.";
-  return `Victoria clara de ${winner}. Se impuso con autoridad.`;
-}
-
 const GRUPOS_ORDEN = ["A","B","C","D","E","F","G","H","I","J","K","L"] as const;
-
-type Counter = { a: number; e: number; b: number; n: number };
-
-function FormPills({ partidos }: { partidos: UltimoPartidoEquipo[] }) {
-  if (partidos.length === 0)
-    return <span className={styles.formEmpty}>Sin datos históricos</span>;
-  return (
-    <>
-      {partidos.map((p, i) => (
-        <div
-          key={i}
-          className={`${styles.pill} ${
-            p.resultado === "G" ? styles.pillG :
-            p.resultado === "E" ? styles.pillE :
-            p.resultado === "P" ? styles.pillP : styles.pillN
-          }`}
-          title={`vs ${p.rival}  ${p.goles_favor ?? "?"}–${p.goles_contra ?? "?"}${p.fecha ? `  (${p.fecha})` : ""}`}
-        >
-          {p.resultado === "?" ? "–" : p.resultado}
-        </div>
-      ))}
-    </>
-  );
-}
 
 interface Props {
   presetEquipoA?: string;
@@ -63,14 +22,6 @@ export default function SimuladorPartidosSection({ presetEquipoA, presetEquipoB 
   const [data, setData] = useState<ProbabilidadesResponse | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [barsReady, setBarsReady] = useState(false);
-
-  const [simulating, setSimulating] = useState(false);
-  const [dispA, setDispA] = useState<number | null>(null);
-  const [dispB, setDispB] = useState<number | null>(null);
-  const [fixed, setFixed] = useState(false);
-  const [result, setResult] = useState<SimularResponse | null>(null);
-  const [counter, setCounter] = useState<Counter>({ a: 0, e: 0, b: 0, n: 0 });
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     getSelecciones().then(setSelecciones).catch(() => {});
@@ -88,18 +39,10 @@ export default function SimuladorPartidosSection({ presetEquipoA, presetEquipoB 
     if (!codigoA || !codigoB || codigoA === codigoB) {
       setData(null);
       setBarsReady(false);
-      setResult(null);
-      setDispA(null);
-      setDispB(null);
-      setFixed(false);
       return;
     }
     setLoadingData(true);
     setBarsReady(false);
-    setResult(null);
-    setDispA(null);
-    setDispB(null);
-    setFixed(false);
     getProbabilidades(codigoA, codigoB)
       .then((d) => {
         setData(d);
@@ -109,46 +52,8 @@ export default function SimuladorPartidosSection({ presetEquipoA, presetEquipoB 
       .catch(() => setLoadingData(false));
   }, [codigoA, codigoB]);
 
-  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
-
-  async function simular() {
-    if (!codigoA || !codigoB || simulating) return;
-    setSimulating(true);
-    setFixed(false);
-    setResult(null);
-    setDispA(Math.floor(Math.random() * 5));
-    setDispB(Math.floor(Math.random() * 5));
-    try {
-      const res = await simularPorCodigo(codigoA, codigoB);
-      if (timerRef.current) clearInterval(timerRef.current);
-      let elapsed = 0;
-      timerRef.current = setInterval(() => {
-        elapsed += 80;
-        setDispA(Math.floor(Math.random() * 6));
-        setDispB(Math.floor(Math.random() * 6));
-        if (elapsed >= 1200) {
-          clearInterval(timerRef.current!);
-          setDispA(res.goles_a);
-          setDispB(res.goles_b);
-          setFixed(true);
-          setResult(res);
-          setCounter((prev) => ({
-            a: prev.a + (res.ganador === "a" ? 1 : 0),
-            e: prev.e + (res.ganador === "empate" ? 1 : 0),
-            b: prev.b + (res.ganador === "b" ? 1 : 0),
-            n: prev.n + 1,
-          }));
-          setSimulating(false);
-        }
-      }, 80);
-    } catch {
-      setSimulating(false);
-    }
-  }
-
   const teamA = selecciones.find((s) => s.codigo_fifa === codigoA);
   const teamB = selecciones.find((s) => s.codigo_fifa === codigoB);
-  const bothSelected = !!(codigoA && codigoB && codigoA !== codigoB);
 
   return (
     <div>
@@ -290,131 +195,90 @@ export default function SimuladorPartidosSection({ presetEquipoA, presetEquipoB 
                   Incluye {data.total_h2h} enfrentamiento{data.total_h2h > 1 ? "s" : ""} directo{data.total_h2h > 1 ? "s" : ""} en Mundiales FIFA
                 </p>
               )}
+
+              {/* GOLES ESPERADOS */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 32, marginTop: 20, alignItems: "flex-end" }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: "2.6rem", fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: "-0.04em" }}>
+                    {data.lambda_a.toFixed(2)}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.55)", marginTop: 4 }}>
+                    {data.equipo_a.nombre}
+                  </div>
+                </div>
+                <div style={{ textAlign: "center", paddingBottom: 6 }}>
+                  <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                    goles esperados
+                  </div>
+                  <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+                    Según el modelo Poisson
+                  </div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: "2.6rem", fontWeight: 900, color: "#D0021B", lineHeight: 1, letterSpacing: "-0.04em" }}>
+                    {data.lambda_b.toFixed(2)}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.55)", marginTop: 4 }}>
+                    {data.equipo_b.nombre}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* BLOQUE 2 — ANÁLISIS COMPARATIVO */}
-      {data && (
-        <section className={styles.blockAnalysis}>
-          <div className="container">
-            <div className={styles.sectionTitle}>Análisis comparativo</div>
-            <div className={styles.rankGrid}>
-              {([
-                { team: data.equipo_a, cardClass: styles.rankCardA, labelClass: styles.rankTeamLabelA, numClass: styles.rankNumA },
-                { team: data.equipo_b, cardClass: styles.rankCardB, labelClass: styles.rankTeamLabelB, numClass: styles.rankNumB },
-              ] as const).map(({ team, cardClass, labelClass, numClass }) => (
-                <div key={team.codigo_fifa} className={`${styles.rankCard} ${cardClass}`}>
-                  <div className={`${styles.rankTeamLabel} ${labelClass}`}>{team.codigo_fifa}</div>
-                  <div className={styles.rankTeamName}>{team.nombre}</div>
-                  <div className={`${styles.rankNum} ${numClass}`}>
-                    {team.ranking_fifa ? `#${team.ranking_fifa}` : "N/R"}
-                  </div>
-                  {team.puntos_fifa != null && (
-                    <div className={styles.rankPoints}>{Math.round(team.puntos_fifa)} pts FIFA</div>
-                  )}
-                  <div className={styles.formRow}>
-                    <span className={styles.formLabel}>Forma</span>
-                    <FormPills partidos={team.ultimos_5} />
-                  </div>
-                </div>
-              ))}
+      {/* MATRIZ DE MARCADORES */}
+      {data && !loadingData && (
+        <section style={{ background: "#0A1628", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="container" style={{ paddingTop: 24, paddingBottom: 24 }}>
+            <div style={{ fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>
+              Marcadores más probables
             </div>
-
-            <div className={styles.metricsGrid}>
-              {([
-                {
-                  label: "Goles promedio / partido",
-                  valA: data.equipo_a.goles_promedio.toFixed(2),
-                  valB: data.equipo_b.goles_promedio.toFixed(2),
-                  numA: data.equipo_a.goles_promedio,
-                  numB: data.equipo_b.goles_promedio,
-                },
-                {
-                  label: "Porterías en cero",
-                  valA: `${data.equipo_a.porcentaje_porteria_cero}%`,
-                  valB: `${data.equipo_b.porcentaje_porteria_cero}%`,
-                  numA: data.equipo_a.porcentaje_porteria_cero,
-                  numB: data.equipo_b.porcentaje_porteria_cero,
-                },
-                {
-                  label: "Mundiales disputados",
-                  valA: String(data.equipo_a.mundiales_disputados),
-                  valB: String(data.equipo_b.mundiales_disputados),
-                  numA: data.equipo_a.mundiales_disputados,
-                  numB: data.equipo_b.mundiales_disputados,
-                },
-              ] as const).map(({ label, valA, valB, numA, numB }) => {
-                const aLeads = numA > numB;
-                const bLeads = numB > numA;
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxWidth: 480 }}>
+              {data.matriz.slice(0, 9).map((m, idx) => {
+                const isTop = idx === 0;
                 return (
-                  <div key={label} className={styles.metricCard}>
-                    <div className={styles.metricLabel}>{label}</div>
-                    <div className={styles.metricValues}>
-                      <span className={`${styles.metricVal} ${styles.metricValA} ${bLeads ? styles.metricDim : ""}`}>{valA}</span>
-                      <span className={styles.metricVs}>vs</span>
-                      <span className={`${styles.metricVal} ${styles.metricValB} ${aLeads ? styles.metricDim : ""}`}>{valB}</span>
+                  <div key={`${m.i}-${m.j}`} style={{
+                    background: isTop ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)",
+                    border: isTop ? "1px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 8,
+                    padding: "10px 12px",
+                    textAlign: "center",
+                    position: "relative",
+                  }}>
+                    <div style={{ fontSize: "1.3rem", fontWeight: 900, color: isTop ? "#fff" : "rgba(255,255,255,0.8)", letterSpacing: "-0.03em", lineHeight: 1 }}>
+                      {m.i}–{m.j}
+                    </div>
+                    <div style={{ fontSize: "0.7rem", color: isTop ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)", marginTop: 4, fontWeight: 600 }}>
+                      {(m.prob * 100).toFixed(1)}%
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        </section>
-      )}
 
-      {/* BLOQUE 3 — EL SIMULADOR */}
-      {bothSelected && (
-        <section className={styles.blockSim}>
-          <div className="container">
-            <div className={styles.simContent}>
-              <div className={styles.simTitle}>El Simulador</div>
-              <button className={styles.btnSimular} onClick={simular} disabled={simulating || !data}>
-                {simulating ? "Simulando…" : "Simular Partido"}
-              </button>
-
-              {dispA !== null && dispB !== null && (
-                <div className={styles.scoreboard}>
-                  <div className={styles.scoreTeam}>
-                    <span className={styles.scoreTeamName}>{teamA?.nombre ?? codigoA}</span>
-                  </div>
-                  <div className={styles.scoreNums}>
-                    <span className={`${styles.scoreDigit} ${fixed ? styles.scoreDigitA : styles.scoreDigitRolling}`}>
-                      {dispA}
-                    </span>
-                    <span className={styles.scoreSep}>–</span>
-                    <span className={`${styles.scoreDigit} ${fixed ? styles.scoreDigitB : styles.scoreDigitRolling}`}>
-                      {dispB}
-                    </span>
-                  </div>
-                  <div className={styles.scoreTeam}>
-                    <span className={`${styles.scoreTeamName} ${styles.scoreTeamNameB}`}>
-                      {teamB?.nombre ?? codigoB}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {result && fixed && data && (
-                <>
-                  <p className={styles.matchDesc}>
-                    {matchDesc(result.goles_a, result.goles_b, data.equipo_a.nombre, data.equipo_b.nombre)}
-                  </p>
-                  <button className={styles.btnSimAgain} onClick={simular}>
-                    Simular de nuevo ↺
-                  </button>
-                  {counter.n > 0 && (
-                    <div className={styles.counter}>
-                      En <strong>{counter.n}</strong> simulación{counter.n > 1 ? "es" : ""}:{" "}
-                      <span className={styles.counterA}>{data.equipo_a.nombre} ganó {counter.a}</span>
-                      {" · "}Empató {counter.e}{" · "}
-                      <span className={styles.counterB}>{data.equipo_b.nombre} ganó {counter.b}</span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            {/* CONCLUSIÓN DEL MODELO */}
+            {(() => {
+              const la = data.lambda_a, lb = data.lambda_b;
+              const na = data.equipo_a.nombre, nb = data.equipo_b.nombre;
+              let texto: string;
+              if (la > 1.5 && lb < 1.0)
+                texto = `Partido de baja anotación esperado para ${nb}. ${na} llega como claro favorito.`;
+              else if (lb > 1.5 && la < 1.0)
+                texto = `Partido de baja anotación esperado para ${na}. ${nb} llega como claro favorito.`;
+              else if (la < 1.2 && lb < 1.2)
+                texto = "Se anticipa un partido cerrado con pocas anotaciones. Alta probabilidad de empate.";
+              else if (la > 2.0 || lb > 2.0)
+                texto = "Partido de alta intensidad ofensiva esperado.";
+              else
+                texto = "Encuentro equilibrado según el modelo.";
+              return (
+                <p style={{ marginTop: 14, fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", fontStyle: "italic", maxWidth: 480 }}>
+                  {texto}
+                </p>
+              );
+            })()}
           </div>
         </section>
       )}

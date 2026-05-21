@@ -2,6 +2,7 @@ from sqlalchemy import Integer, String, ForeignKey, DateTime, Boolean, UniqueCon
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 import datetime
+from typing import Optional
 
 
 class QuinielaUsuario(Base):
@@ -28,6 +29,7 @@ class QuinielaPartido(Base):
     goles_local_real: Mapped[int | None] = mapped_column(Integer, nullable=True)
     goles_visitante_real: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cerrado: Mapped[bool] = mapped_column(Boolean, default=False)
+    fecha_hora: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class QuinielaPick(Base):

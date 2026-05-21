@@ -1,0 +1,374 @@
+"""
+Modelo Poisson calibrado para predicción de partidos del Mundial 2026.
+
+Se calibra UNA VEZ al importar el módulo (al arrancar el servidor)
+y cachea parámetros en memoria.
+"""
+
+import csv
+import math
+import random
+from datetime import date, datetime
+from pathlib import Path
+
+import openpyxl
+
+# ─── Rutas de datos ───────────────────────────────────────────────────────────
+
+_BASE = Path(__file__).resolve().parents[3] / "database"
+_CSV_PATH  = _BASE / "Recientes - Hoja 1.csv"
+_XLSX_PATH = _BASE / "ranking_fifa_abril2026.xlsx"
+
+# ─── Parámetros globales ──────────────────────────────────────────────────────
+
+_T       = date(2026, 6, 11)   # inicio del Mundial
+_ALPHA   = 0.003               # decaimiento temporal
+_GAMMA   = 0.3                 # peso del ranking FIFA
+MAX_GOALS = 6                  # inclusive en la matriz
+
+# ─── Pesos competitivos ───────────────────────────────────────────────────────
+
+_DELTA_C: dict[str, float] = {
+    "FIFA World Cup":                           1.00,
+    "FIFA World Cup qualification":             1.00,
+    "UEFA Nations League":                      0.85,
+    "CONCACAF Nations League":                  0.85,
+    "African Cup of Nations":                   0.85,
+    "UEFA Euro":                                0.85,
+    "Gold Cup":                                 0.85,
+    "AFC Asian Cup":                            0.85,
+    "UEFA Euro qualification":                  0.85,
+    "African Cup of Nations qualification":     0.85,
+    "AFC Asian Cup qualification":              0.85,
+    "Friendly":                                 0.50,
+}
+
+
+def _delta(tournament: str) -> float:
+    if tournament in _DELTA_C:
+        return _DELTA_C[tournament]
+    # Copa América tiene codificación corrupta en el CSV
+    if "Copa Am" in tournament:
+        return 0.85
+    return 0.50
+
+
+# ─── Nombres alternativos en el CSV ──────────────────────────────────────────
+
+_ALT: dict[str, str] = {
+    "USA":               "United States",
+    "IR Iran":           "Iran",
+    "Côte d'Ivoire":     "Ivory Coast",
+    "Korea Republic":    "South Korea",
+    "Bosnia-Herzegovina":"Bosnia and Herzegovina",
+    "Congo DR":          "DR Congo",
+    "Curaçao":           "Curacao",
+}
+
+# ─── Mapeo nombre en inglés → código Poisson ─────────────────────────────────
+
+_NAME_TO_CODE: dict[str, str] = {
+    "Mexico":                   "MEX",
+    "South Africa":             "RSA",
+    "South Korea":              "KOR",
+    "Czech Republic":           "CZE",
+    "Canada":                   "CAN",
+    "Bosnia and Herzegovina":   "BIH",
+    "Qatar":                    "QAT",
+    "Switzerland":              "CHE",
+    "Brazil":                   "BRA",
+    "Morocco":                  "MAR",
+    "Haiti":                    "HTI",
+    "Scotland":                 "SCO",
+    "United States":            "USA",
+    "Paraguay":                 "PAR",
+    "Australia":                "AUS",
+    "Turkey":                   "TUR",
+    "Germany":                  "DEU",
+    "Curacao":                  "CUW",
+    "Ivory Coast":              "CIV",
+    "Ecuador":                  "ECU",
+    "Netherlands":              "NED",
+    "Japan":                    "JPN",
+    "Sweden":                   "SWE",
+    "Tunisia":                  "TUN",
+    "Belgium":                  "BEL",
+    "Egypt":                    "EGY",
+    "Iran":                     "IRN",
+    "New Zealand":              "NZL",
+    "Spain":                    "ESP",
+    "Cape Verde":               "CPV",
+    "Saudi Arabia":             "KSA",
+    "Uruguay":                  "URY",
+    "France":                   "FRA",
+    "Senegal":                  "SEN",
+    "Iraq":                     "IRQ",
+    "Norway":                   "NOR",
+    "Argentina":                "ARG",
+    "Algeria":                  "ALG",
+    "Austria":                  "AUT",
+    "Jordan":                   "JOR",
+    "Portugal":                 "POR",
+    "DR Congo":                 "COD",
+    "Uzbekistan":               "UZB",
+    "Colombia":                 "COL",
+    "England":                  "ENG",
+    "Croatia":                  "CRO",
+    "Ghana":                    "GHA",
+    "Panama":                   "PAN",
+}
+
+_POISSON_CODES: frozenset[str] = frozenset(_NAME_TO_CODE.values())
+
+# Traducción de nuestros códigos internos a los códigos Poisson
+# (solo los que difieren)
+_OUR_TO_POISSON: dict[str, str] = {
+    "PRY": "PAR",
+    "NLD": "NED",
+    "HRV": "CRO",
+    "PRT": "POR",
+}
+
+# Mapeo xlsx → código Poisson
+_XLSX_TO_POISSON: dict[str, str] = {
+    "MEX": "MEX", "RSA": "RSA", "KOR": "KOR", "CZH": "CZE",
+    "CAN": "CAN", "BIH": "BIH", "QAT": "QAT", "SUI": "CHE",
+    "BRA": "BRA", "MAR": "MAR", "HAI": "HTI", "SCO": "SCO",
+    "USA": "USA", "PAR": "PAR", "AUS": "AUS", "TUR": "TUR",
+    "GER": "DEU", "CUW": "CUW", "CIV": "CIV", "ECU": "ECU",
+    "NED": "NED", "JPN": "JPN", "SWE": "SWE", "TUN": "TUN",
+    "BEL": "BEL", "EGY": "EGY", "IRN": "IRN", "NZL": "NZL",
+    "ESP": "ESP", "CPV": "CPV", "KSA": "KSA", "URU": "URY",
+    "FRA": "FRA", "SEN": "SEN", "IRQ": "IRQ", "NOR": "NOR",
+    "ARG": "ARG", "ALG": "ALG", "AUT": "AUT", "JOR": "JOR",
+    "POR": "POR", "COD": "COD", "UZB": "UZB", "COL": "COL",
+    "ENG": "ENG", "CRO": "CRO", "GHA": "GHA", "PAN": "PAN",
+}
+
+# ─── Calibración ──────────────────────────────────────────────────────────────
+
+def _pois_pmf(lam: float, k: int) -> float:
+    return math.exp(-lam) * (lam ** k) / math.factorial(k)
+
+
+def _calibrar() -> tuple[float, dict, dict]:
+    """
+    Retorna (mu, params_dict, fifa_pts_dict).
+    params_dict: código → {att, def_, rho, n, lambda_gf, lambda_gc}
+    fifa_pts_dict: código → puntos FIFA
+    """
+    # 1. Leer ranking FIFA
+    wb = openpyxl.load_workbook(_XLSX_PATH)
+    ws = wb.active
+    fifa_pts: dict[str, float] = {}
+    for row in ws.iter_rows(min_row=4, values_only=True):
+        if row[0] and isinstance(row[0], int) and row[2] in _XLSX_TO_POISSON:
+            fifa_pts[_XLSX_TO_POISSON[row[2]]] = float(row[3])
+
+    # Completar con promedio los códigos sin datos (fallback)
+    e_avg = sum(fifa_pts.values()) / len(fifa_pts) if fifa_pts else 1500.0
+    for code in _POISSON_CODES:
+        fifa_pts.setdefault(code, e_avg)
+    e_avg = sum(fifa_pts[c] for c in _POISSON_CODES) / len(_POISSON_CODES)
+
+    # 2. Acumular estadísticas del CSV
+    accum: dict[str, dict] = {
+        c: {"gf_w": 0.0, "gc_w": 0.0, "w_total": 0.0, "n": 0}
+        for c in _POISSON_CODES
+    }
+    with open(_CSV_PATH, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            h_raw = _ALT.get(row["home_team"], row["home_team"])
+            a_raw = _ALT.get(row["away_team"], row["away_team"])
+            hc = _NAME_TO_CODE.get(h_raw)
+            ac = _NAME_TO_CODE.get(a_raw)
+            if not hc and not ac:
+                continue
+            try:
+                fecha = datetime.strptime(row["date"], "%d/%m/%y").date()
+                gh, ga = int(row["home_score"]), int(row["away_score"])
+            except (ValueError, KeyError):
+                continue
+            days = (_T - fecha).days
+            if days < 0:
+                continue
+            w_t = math.exp(-_ALPHA * days)
+            dc  = _delta(row["tournament"])
+            w   = w_t * dc
+            for code, gf, gc in [(hc, gh, ga), (ac, ga, gh)]:
+                if code:
+                    s = accum[code]
+                    s["gf_w"]    += gf * w
+                    s["gc_w"]    += gc * w
+                    s["w_total"] += w
+                    s["n"]       += 1
+
+    # 3. mu global (solo equipos con datos suficientes)
+    total_gf_w = sum(s["gf_w"] for s in accum.values() if s["n"] >= 15)
+    total_w    = sum(s["w_total"] for s in accum.values() if s["n"] >= 15)
+    mu_raw = total_gf_w / total_w if total_w > 0 else 1.5
+    mu     = math.log(mu_raw)
+
+    # 4. Parámetros por selección
+    params: dict[str, dict] = {}
+    for code in _POISSON_CODES:
+        s = accum[code]
+        if s["n"] >= 15:
+            lf   = s["gf_w"] / s["w_total"]
+            lc   = s["gc_w"] / s["w_total"]
+            att  = math.log(lf) - mu
+            def_ = math.log(lc) - mu
+        else:
+            lf = lc = math.exp(mu)
+            att = def_ = 0.0
+        ei  = fifa_pts.get(code, e_avg)
+        rho = _GAMMA * math.log(ei / e_avg)
+        params[code] = {
+            "att": att, "def_": def_, "rho": rho,
+            "n": s["n"], "lambda_gf": lf, "lambda_gc": lc,
+        }
+
+    return mu, params, fifa_pts
+
+
+# Calibración única al importar
+_mu: float
+_params: dict
+_fifa_pts: dict
+_mu, _params, _fifa_pts = _calibrar()
+
+# ─── Funciones públicas ───────────────────────────────────────────────────────
+
+def _resolve(codigo: str) -> str:
+    """Traduce código interno (PRY, NLD…) al código Poisson si difiere."""
+    return _OUR_TO_POISSON.get(codigo, codigo)
+
+
+def calcular_lambda(codigo_i: str, codigo_j: str) -> tuple[float, float]:
+    """
+    Retorna (lambda_A, lambda_B) usando el modelo campo neutro:
+      log(λ_A) = μ + att_A + ρ_A + def_B − ρ_B
+      log(λ_B) = μ + att_B + ρ_B + def_A − ρ_A
+    """
+    ci, cj = _resolve(codigo_i), _resolve(codigo_j)
+    pi, pj = _params[ci], _params[cj]
+    log_la = _mu + pi["att"] + pi["rho"] + pj["def_"] - pj["rho"]
+    log_lb = _mu + pj["att"] + pj["rho"] + pi["def_"] - pi["rho"]
+    return math.exp(log_la), math.exp(log_lb)
+
+
+def _build_matrix(la: float, lb: float) -> list[tuple[int, int, float]]:
+    """Lista de (i, j, prob) para i,j en 0..MAX_GOALS, ordenada por prob desc."""
+    cells = []
+    for i in range(MAX_GOALS + 1):
+        for j in range(MAX_GOALS + 1):
+            cells.append((i, j, _pois_pmf(la, i) * _pois_pmf(lb, j)))
+    cells.sort(key=lambda x: -x[2])
+    return cells
+
+
+def _probs_from_matrix(cells: list[tuple[int, int, float]]) -> tuple[float, float, float]:
+    pa = pe = pb = 0.0
+    for i, j, p in cells:
+        if i > j:   pa += p
+        elif i == j: pe += p
+        else:        pb += p
+    return pa, pe, pb
+
+
+def _sample_score(
+    cells: list[tuple[int, int, float]],
+) -> tuple[int, int]:
+    outcomes = [(i, j) for i, j, _ in cells]
+    weights  = [p for _, _, p in cells]
+    return random.choices(outcomes, weights=weights, k=1)[0]
+
+
+def _penales(codigo_a: str, codigo_b: str) -> str:
+    """Ganador en penaltis: 50/50 ajustado levemente por puntos FIFA."""
+    ca, cb = _resolve(codigo_a), _resolve(codigo_b)
+    ea = _fifa_pts.get(ca, 1500.0)
+    eb = _fifa_pts.get(cb, 1500.0)
+    prob_a = 0.5 + 0.05 * (ea - eb) / (ea + eb)
+    return "A" if random.random() < prob_a else "B"
+
+
+def simular_partido(
+    codigo_a: str,
+    codigo_b: str,
+    fase: str = "grupos",
+) -> dict:
+    """
+    Simula un partido completo y retorna el resultado con todos los campos
+    de diagnóstico.
+    """
+    la, lb = calcular_lambda(codigo_a, codigo_b)
+    cells   = _build_matrix(la, lb)
+    pa, pe, pb = _probs_from_matrix(cells)
+
+    # Sortear resultado
+    ga, gb = _sample_score(cells)
+
+    fue_prorroga = False
+    fue_penales  = False
+    ganador: str
+
+    if ga == gb and fase != "grupos":
+        # Prórroga
+        fue_prorroga = True
+        la_et, lb_et = la * 0.7, lb * 0.7
+        cells_et = _build_matrix(la_et, lb_et)
+        da, db = _sample_score(cells_et)
+        ga += da
+        gb += db
+
+        if ga == gb:
+            fue_penales = True
+            ganador = _penales(codigo_a, codigo_b)
+        else:
+            ganador = "A" if ga > gb else "B"
+    elif ga > gb:
+        ganador = "A"
+    elif gb > ga:
+        ganador = "B"
+    else:
+        ganador = "empate"
+
+    top10 = [{"i": i, "j": j, "prob": round(p, 6)} for i, j, p in cells[:10]]
+
+    return {
+        "lambda_a":     round(la, 4),
+        "lambda_b":     round(lb, 4),
+        "prob_a":       round(pa * 100, 2),
+        "prob_empate":  round(pe * 100, 2),
+        "prob_b":       round(pb * 100, 2),
+        "goles_a":      ga,
+        "goles_b":      gb,
+        "ganador":      ganador,
+        "fue_prorroga": fue_prorroga,
+        "fue_penales":  fue_penales,
+        "matriz":       top10,
+    }
+
+
+def get_params(codigo: str) -> dict:
+    """Parámetros calibrados para diagnóstico."""
+    c = _resolve(codigo)
+    p = _params.get(c)
+    if not p:
+        return {}
+    return {
+        "att":       round(p["att"],  4),
+        "def_":      round(p["def_"], 4),
+        "rho":       round(p["rho"],  4),
+        "n":         p["n"],
+        "lambda_gf": round(p["lambda_gf"], 4),
+        "lambda_gc": round(p["lambda_gc"], 4),
+    }
+
+
+def get_matrix_top(codigo_a: str, codigo_b: str, top: int = 9) -> list[dict]:
+    """Top-N marcadores más probables (para endpoint probabilidades)."""
+    la, lb = calcular_lambda(codigo_a, codigo_b)
+    cells  = _build_matrix(la, lb)
+    return [{"i": i, "j": j, "prob": round(p, 6)} for i, j, p in cells[:top]]

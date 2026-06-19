@@ -188,18 +188,18 @@ _FIXTURE_RAW = [
     {
         "nombre": "K",
         "equipos": [
-            ("Portugal",    "PRT"),
-            ("Jamaica",     "JAM"),
-            ("Uzbekistán",  "UZB"),
-            ("Colombia",    "COL"),
+            ("Portugal",                        "PRT"),
+            ("República Democrática del Congo", "COD"),
+            ("Uzbekistán",                      "UZB"),
+            ("Colombia",                        "COL"),
         ],
         "partidos": [
-            ("K1", "17 jun", "PRT", "JAM"),
+            ("K1", "17 jun", "PRT", "COD"),
             ("K2", "17 jun", "UZB", "COL"),
             ("K3", "23 jun", "PRT", "UZB"),
-            ("K4", "23 jun", "COL", "JAM"),
+            ("K4", "23 jun", "COL", "COD"),
             ("K5", "27 jun", "COL", "PRT"),
-            ("K6", "27 jun", "JAM", "UZB"),
+            ("K6", "27 jun", "COD", "UZB"),
         ],
     },
     {

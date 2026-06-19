@@ -15,7 +15,7 @@ _NOMBRES = {
     "ESP": "España", "CPV": "Cabo Verde", "KSA": "Arabia Saudí", "URY": "Uruguay",
     "FRA": "Francia", "SEN": "Senegal", "IRQ": "Irak", "NOR": "Noruega",
     "ARG": "Argentina", "ALG": "Argelia", "AUT": "Austria", "JOR": "Jordania",
-    "PRT": "Portugal", "JAM": "Jamaica", "UZB": "Uzbekistán", "COL": "Colombia",
+    "PRT": "Portugal", "COD": "RD Congo", "UZB": "Uzbekistán", "COL": "Colombia",
     "ENG": "Inglaterra", "HRV": "Croacia", "GHA": "Ghana", "PAN": "Panamá",
 }
 
@@ -59,9 +59,9 @@ _FIXTURE = [
     ("J", "J1", "16 jun", "ARG", "ALG"), ("J", "J2", "16 jun", "AUT", "JOR"),
     ("J", "J3", "22 jun", "ARG", "AUT"), ("J", "J4", "22 jun", "JOR", "ALG"),
     ("J", "J5", "27 jun", "ALG", "AUT"), ("J", "J6", "27 jun", "JOR", "ARG"),
-    ("K", "K1", "17 jun", "PRT", "JAM"), ("K", "K2", "17 jun", "UZB", "COL"),
-    ("K", "K3", "23 jun", "PRT", "UZB"), ("K", "K4", "23 jun", "COL", "JAM"),
-    ("K", "K5", "27 jun", "COL", "PRT"), ("K", "K6", "27 jun", "JAM", "UZB"),
+    ("K", "K1", "17 jun", "PRT", "COD"), ("K", "K2", "17 jun", "UZB", "COL"),
+    ("K", "K3", "23 jun", "PRT", "UZB"), ("K", "K4", "23 jun", "COL", "COD"),
+    ("K", "K5", "27 jun", "COL", "PRT"), ("K", "K6", "27 jun", "COD", "UZB"),
     ("L", "L1", "17 jun", "ENG", "HRV"), ("L", "L2", "17 jun", "GHA", "PAN"),
     ("L", "L3", "23 jun", "ENG", "GHA"), ("L", "L4", "23 jun", "PAN", "HRV"),
     ("L", "L5", "27 jun", "PAN", "ENG"), ("L", "L6", "27 jun", "HRV", "GHA"),

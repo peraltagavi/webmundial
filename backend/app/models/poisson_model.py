@@ -203,23 +203,23 @@ def _calibrar() -> tuple[float, dict, dict]:
                     s["w_total"] += w
                     s["n"]       += 1
 
-    # 3. mu global (solo equipos con datos suficientes)
+    # 3. mu global baseline del CSV (solo equipos con datos suficientes)
     total_gf_w = sum(s["gf_w"] for s in accum.values() if s["n"] >= 15)
     total_w    = sum(s["w_total"] for s in accum.values() if s["n"] >= 15)
-    mu_raw = total_gf_w / total_w if total_w > 0 else 1.5
-    mu     = math.log(mu_raw)
+    mu_raw     = total_gf_w / total_w if total_w > 0 else 1.5
+    mu_actual  = math.log(mu_raw)
 
-    # 4. Parámetros por selección
+    # 4. Parámetros por selección (relativos a mu_actual para preservar diferencias)
     params: dict[str, dict] = {}
     for code in _POISSON_CODES:
         s = accum[code]
         if s["n"] >= 15:
             lf   = s["gf_w"] / s["w_total"]
             lc   = s["gc_w"] / s["w_total"]
-            att  = math.log(lf) - mu
-            def_ = math.log(lc) - mu
+            att  = math.log(lf) - mu_actual
+            def_ = math.log(lc) - mu_actual
         else:
-            lf = lc = math.exp(mu)
+            lf = lc = mu_raw
             att = def_ = 0.0
         ei  = fifa_pts.get(code, e_avg)
         rho = _GAMMA * math.log(ei / e_avg)
@@ -227,6 +227,26 @@ def _calibrar() -> tuple[float, dict, dict]:
             "att": att, "def_": def_, "rho": rho,
             "n": s["n"], "lambda_gf": lf, "lambda_gc": lc,
         }
+
+    # 5. Recalibración de mu al contexto del Mundial (target: 2.64 goles/partido)
+    # Los 48 equipos clasificados inflan mu_actual al jugar contra equipos no clasificados.
+    # Corregimos para que el promedio esperado entre pares del torneo sea 2.64/partido.
+    # Fórmula: mu_final = mu_actual + log(2.64 / avg_lambda_con_mu_actual)
+    # El promedio λ_A+λ_B sobre todos los pares se computa numéricamente.
+    calibrated_codes = [c for c in _POISSON_CODES if params[c]["n"] >= 15]
+    total_lam = 0.0
+    pair_count = 0
+    for ci in calibrated_codes:
+        for cj in calibrated_codes:
+            if ci == cj:
+                continue
+            pi, pj = params[ci], params[cj]
+            log_la = mu_actual + pi["att"] + pi["rho"] + pj["def_"] - pj["rho"]
+            total_lam += math.exp(log_la)
+            pair_count += 1
+    avg_lambda_per_team = total_lam / pair_count if pair_count > 0 else mu_raw
+    avg_goals_per_match = avg_lambda_per_team * 2
+    mu = mu_actual + math.log(2.64 / avg_goals_per_match)
 
     return mu, params, fifa_pts
 
